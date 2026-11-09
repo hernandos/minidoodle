@@ -11,7 +11,7 @@ import java.util.List;
  * Pure domain entity representing a scheduled meeting.
  * Created when converting available FREE slots of participants into booked BUSY events.
  * Meetings inherit the timeframe of the consumed slots and cannot have an independent duration.
- *
+ * <p>
  * Invariant: all consumed slots must match the exact same timeframe.
  * Enforced exclusively through {@link #addConsumedSlot(TimeSlot)}; the slot list is
  * exposed read-only and construction is only possible via the static factories.
@@ -35,7 +35,11 @@ public class Meeting {
         return new Meeting(null, title, description, organizer);
     }
 
-    public static Meeting reconstitute(Long id, String title, String description, User organizer, List<TimeSlot> slots) {
+    public static Meeting reconstitute(Long id,
+                                       String title,
+                                       String description,
+                                       User organizer,
+                                       List<TimeSlot> slots) {
         Meeting meeting = new Meeting(id, title, description, organizer);
         if (slots != null) {
             for (TimeSlot slot : slots) {

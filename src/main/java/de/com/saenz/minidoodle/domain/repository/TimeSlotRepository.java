@@ -25,6 +25,17 @@ public interface TimeSlotRepository {
 
     List<TimeSlot> findByUserIdAndTimeRange(Long userId, Instant startTime, Instant endTime);
 
+    List<TimeSlot> findByTimeRange(Instant startTime, Instant endTime);
+
+    List<TimeSlot> findByTimeRangeAndStatus(Instant startTime, Instant endTime, SlotStatus status);
+
+    List<TimeSlot> findByUserIdsAndTimeRange(List<Long> userIds, Instant startTime, Instant endTime);
+
+    List<TimeSlot> findByUserIdsAndTimeRangeAndStatus(List<Long> userIds,
+                                                      Instant startTime,
+                                                      Instant endTime,
+                                                      SlotStatus status);
+
     Optional<TimeSlot> findByUserIdAndStartTimeAndEndTime(Long userId, Instant startTime, Instant endTime);
 
     void deleteById(Long id);

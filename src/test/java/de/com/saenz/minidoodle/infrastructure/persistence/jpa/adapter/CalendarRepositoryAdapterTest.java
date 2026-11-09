@@ -34,10 +34,10 @@ class CalendarRepositoryAdapterTest {
     private User createUniqueUser(String prefix) {
         String uid = UUID.randomUUID().toString().substring(0, 8);
         return userRepository.save(User.builder()
-                .username(prefix + "_" + uid)
-                .name("Calendar User " + uid)
-                .email(prefix + "_" + uid + "@example.com")
-                .build());
+                                       .username(prefix + "_" + uid)
+                                       .name("Calendar User " + uid)
+                                       .email(prefix + "_" + uid + "@example.com")
+                                       .build());
     }
 
     @Test
@@ -50,18 +50,18 @@ class CalendarRepositoryAdapterTest {
         Instant t2 = t1.plus(Duration.ofHours(1));
 
         timeSlotRepository.save(TimeSlot.builder()
-                .user(user)
-                .startTime(t0)
-                .endTime(t1)
-                .status(SlotStatus.FREE)
-                .build());
+                                        .user(user)
+                                        .startTime(t0)
+                                        .endTime(t1)
+                                        .status(SlotStatus.FREE)
+                                        .build());
 
         timeSlotRepository.save(TimeSlot.builder()
-                .user(user)
-                .startTime(t1)
-                .endTime(t2)
-                .status(SlotStatus.BUSY)
-                .build());
+                                        .user(user)
+                                        .startTime(t1)
+                                        .endTime(t2)
+                                        .status(SlotStatus.BUSY)
+                                        .build());
 
         Optional<Calendar> calendarOpt = calendarRepository.findByUserId(user.getId());
 

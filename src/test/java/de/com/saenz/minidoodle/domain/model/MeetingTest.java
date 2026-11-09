@@ -19,10 +19,10 @@ class MeetingTest {
         Instant end = start.plus(Duration.ofMinutes(45));
 
         TimeSlot slot = TimeSlot.builder()
-                .startTime(start)
-                .endTime(end)
-                .status(SlotStatus.BUSY)
-                .build();
+                                .startTime(start)
+                                .endTime(end)
+                                .status(SlotStatus.BUSY)
+                                .build();
 
         Meeting meeting = Meeting.of("Architecture Review", null, null);
 
@@ -39,14 +39,14 @@ class MeetingTest {
         Instant end = start.plus(Duration.ofMinutes(30));
 
         TimeSlot slot1 = TimeSlot.builder()
-                .startTime(start)
-                .endTime(end)
-                .build();
+                                 .startTime(start)
+                                 .endTime(end)
+                                 .build();
 
         TimeSlot slot2 = TimeSlot.builder()
-                .startTime(start)
-                .endTime(end.plus(Duration.ofMinutes(15)))
-                .build();
+                                 .startTime(start)
+                                 .endTime(end.plus(Duration.ofMinutes(15)))
+                                 .build();
 
         Meeting meeting = Meeting.of("Sprint Planning", null, null);
 

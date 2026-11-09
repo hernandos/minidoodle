@@ -40,7 +40,7 @@ public class TimeSlot {
         this.status = SlotStatus.FREE;
     }
 
-    void updateTimeframe(Instant newStartTime, Instant newEndTime) {
+    public void updateTimeframe(Instant newStartTime, Instant newEndTime) {
         if (newStartTime == null || newEndTime == null) {
             throw new IllegalArgumentException("Start time and end time must not be null");
         }
@@ -51,35 +51,35 @@ public class TimeSlot {
         this.endTime = newEndTime;
     }
 
-    Duration getDuration() {
+    public Duration getDuration() {
         if (startTime == null || endTime == null) {
             return Duration.ZERO;
         }
         return Duration.between(startTime, endTime);
     }
 
-    boolean overlapsWith(TimeSlot other) {
+    public boolean overlapsWith(TimeSlot other) {
         if (other == null || other.getStartTime() == null || other.getEndTime() == null) {
             return false;
         }
         return overlapsWith(other.getStartTime(), other.getEndTime());
     }
 
-    boolean overlapsWith(Instant otherStart, Instant otherEnd) {
+    public boolean overlapsWith(Instant otherStart, Instant otherEnd) {
         if (startTime == null || endTime == null || otherStart == null || otherEnd == null) {
             return false;
         }
         return startTime.isBefore(otherEnd) && endTime.isAfter(otherStart);
     }
 
-    boolean matchesTimeframe(Instant targetStart, Instant targetEnd) {
+    public boolean matchesTimeframe(Instant targetStart, Instant targetEnd) {
         if (startTime == null || endTime == null || targetStart == null || targetEnd == null) {
             return false;
         }
         return startTime.equals(targetStart) && endTime.equals(targetEnd);
     }
 
-    void validate() {
+    public void validate() {
         if (startTime == null || endTime == null) {
             throw new IllegalArgumentException("Start time and end time must not be null");
         }

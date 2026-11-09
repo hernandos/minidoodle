@@ -19,7 +19,8 @@ import java.time.Instant;
 @Table(
         name = "time_slots",
         indexes = {
-                @Index(name = "idx_time_slots_user_start_end", columnList = "user_id, start_time, end_time")
+                @Index(name = "idx_time_slots_user_start_end", columnList = "user_id, start_time, end_time"),
+                @Index(name = "idx_time_slots_start_end_status", columnList = "start_time, end_time, status")
         }
 )
 public class TimeSlotEntity {
