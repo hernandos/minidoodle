@@ -18,5 +18,8 @@ public record ScheduleMeetingCommand(
         if (participantIds == null) {
             participantIds = List.of();
         }
+        if (participantIds.stream().anyMatch(java.util.Objects::isNull)) {
+            throw new IllegalArgumentException("Participant IDs must not contain null elements");
+        }
     }
 }

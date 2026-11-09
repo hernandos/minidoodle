@@ -41,11 +41,13 @@ class MeetingTest {
         TimeSlot slot1 = TimeSlot.builder()
                                  .startTime(start)
                                  .endTime(end)
+                                 .status(SlotStatus.BUSY)
                                  .build();
 
         TimeSlot slot2 = TimeSlot.builder()
                                  .startTime(start)
                                  .endTime(end.plus(Duration.ofMinutes(15)))
+                                 .status(SlotStatus.BUSY)
                                  .build();
 
         Meeting meeting = Meeting.of("Sprint Planning", null, null);
@@ -58,6 +60,42 @@ class MeetingTest {
     }
 
     @Test
+    @DisplayName("should reject slot if it is FREE")
+    void addConsumedSlot_shouldThrowException_whenSlotIsFree() {
+        Instant start = Instant.parse("2026-11-09T14:00:00Z");
+        Instant end = start.plus(Duration.ofMinutes(30));
+
+        TimeSlot slot = TimeSlot.builder().startTime(start).endTime(end).status(SlotStatus.FREE).build();
+        Meeting meeting = Meeting.of("Sprint Planning", null, null);
+
+        assertThatThrownBy(() -> meeting.addConsumedSlot(slot))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Cannot consume a FREE slot");
+    }
+
+    @Test
+    @DisplayName("should reject duplicate slot or duplicate user in meeting")
+    void addConsumedSlot_shouldRejectDuplicateSlotAndUser() {
+        User user = User.builder().id(10L).name("Alice").build();
+        Instant start = Instant.parse("2026-11-09T14:00:00Z");
+        Instant end = start.plus(Duration.ofMinutes(30));
+
+        TimeSlot slot1 = TimeSlot.builder().id(1L).user(user).startTime(start).endTime(end).status(SlotStatus.BUSY).build();
+        TimeSlot slot2 = TimeSlot.builder().id(2L).user(user).startTime(start).endTime(end).status(SlotStatus.BUSY).build();
+
+        Meeting meeting = Meeting.of("Sync", null, null);
+        meeting.addConsumedSlot(slot1);
+
+        assertThatThrownBy(() -> meeting.addConsumedSlot(slot1))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("already added");
+
+        assertThatThrownBy(() -> meeting.addConsumedSlot(slot2))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("already present");
+    }
+
+    @Test
     @DisplayName("should list participants excluding organizer")
     void getParticipants_shouldExcludeOrganizer_whenParticipantsAreQueried() {
         User organizer = User.builder().id(1L).name("Alice").build();
@@ -67,9 +105,9 @@ class MeetingTest {
         Instant start = Instant.parse("2026-11-09T14:00:00Z");
         Instant end = start.plus(Duration.ofMinutes(30));
 
-        TimeSlot slotOrg = TimeSlot.builder().user(organizer).startTime(start).endTime(end).build();
-        TimeSlot slotBob = TimeSlot.builder().user(participant1).startTime(start).endTime(end).build();
-        TimeSlot slotCharlie = TimeSlot.builder().user(participant2).startTime(start).endTime(end).build();
+        TimeSlot slotOrg = TimeSlot.builder().user(organizer).startTime(start).endTime(end).status(SlotStatus.BUSY).build();
+        TimeSlot slotBob = TimeSlot.builder().user(participant1).startTime(start).endTime(end).status(SlotStatus.BUSY).build();
+        TimeSlot slotCharlie = TimeSlot.builder().user(participant2).startTime(start).endTime(end).status(SlotStatus.BUSY).build();
 
         Meeting meeting = Meeting.of(null, null, organizer);
 

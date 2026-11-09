@@ -218,4 +218,45 @@ class MeetingApplicationServiceTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Participant not found with id: 99");
     }
+
+    @Test
+    @DisplayName("scheduleMeeting should throw IllegalArgumentException when participantIds list contains null")
+    void scheduleMeeting_shouldThrowIllegalArgumentException_whenParticipantIdsContainsNull() {
+        List<Long> participantsWithNull = new java.util.ArrayList<>();
+        participantsWithNull.add(2L);
+        participantsWithNull.add(null);
+
+        assertThatThrownBy(() -> new ScheduleMeetingCommand("Sync", null, 1L, participantsWithNull, start, end))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Participant IDs must not contain null elements");
+    }
+
+    @Test
+    @DisplayName("cancelMeeting should mark consumed slots as free and delete meeting")
+    void cancelMeeting_shouldRevertSlotsToFree_andDeleteMeeting() {
+        TimeSlot slot1 = TimeSlot.builder().id(101L).startTime(start).endTime(end).status(SlotStatus.BUSY).build();
+        TimeSlot slot2 = TimeSlot.builder().id(102L).startTime(start).endTime(end).status(SlotStatus.BUSY).build();
+        Meeting meeting = Meeting.of("Sync", null, organizer);
+        meeting.addConsumedSlot(slot1);
+        meeting.addConsumedSlot(slot2);
+
+        when(meetingRepository.findById(42L)).thenReturn(Optional.of(meeting));
+
+        meetingApplicationService.cancelMeeting(42L);
+
+        assertThat(slot1.getStatus()).isEqualTo(SlotStatus.FREE);
+        assertThat(slot2.getStatus()).isEqualTo(SlotStatus.FREE);
+        verify(timeSlotRepository).saveAll(meeting.getTimeSlots());
+        verify(meetingRepository).deleteById(42L);
+    }
+
+    @Test
+    @DisplayName("cancelMeeting should throw IllegalArgumentException when meeting does not exist")
+    void cancelMeeting_shouldThrowIllegalArgumentException_whenMeetingNotFound() {
+        when(meetingRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> meetingApplicationService.cancelMeeting(99L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Meeting not found with id: 99");
+    }
 }

@@ -38,6 +38,9 @@ class ApplicationServicesIntegrationTest {
     private ScheduleMeetingUseCase scheduleMeetingUseCase;
 
     @Autowired
+    private CancelMeetingUseCase cancelMeetingUseCase;
+
+    @Autowired
     private GetAggregatedAvailabilityQuery aggregatedAvailabilityQuery;
 
     @Autowired
@@ -163,5 +166,35 @@ class ApplicationServicesIntegrationTest {
 
         deleteTimeSlotUseCase.deleteTimeSlot(slot.getId());
         assertThat(timeSlotRepository.findById(slot.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("cancelMeeting should free all consumed slots and delete meeting")
+    void cancelMeeting_shouldFreeAllSlots_andDeleteMeeting() {
+        User organizer = createUniqueUser("cancel_org");
+        User participant = createUniqueUser("cancel_part");
+
+        Instant start = Instant.parse("2026-11-20T11:00:00Z");
+        Instant end = start.plus(Duration.ofMinutes(30));
+
+        TimeSlot orgSlot = createTimeSlotUseCase.createTimeSlot(organizer.getId(), start, end);
+        TimeSlot partSlot = createTimeSlotUseCase.createTimeSlot(participant.getId(), start, end);
+
+        Meeting meeting = scheduleMeetingUseCase.scheduleMeeting(new ScheduleMeetingCommand(
+                "Quick Sync", null, organizer.getId(), List.of(participant.getId()), start, end
+        ));
+
+        assertThat(timeSlotRepository.findById(orgSlot.getId())).get().extracting(TimeSlot::getStatus).isEqualTo(SlotStatus.BUSY);
+        assertThat(timeSlotRepository.findById(partSlot.getId())).get().extracting(TimeSlot::getStatus).isEqualTo(SlotStatus.BUSY);
+
+        // Cancel meeting
+        cancelMeetingUseCase.cancelMeeting(meeting.getId());
+
+        // Verify meeting is deleted
+        assertThat(meetingRepository.findById(meeting.getId())).isEmpty();
+
+        // Verify slots are freed back to FREE
+        assertThat(timeSlotRepository.findById(orgSlot.getId())).get().extracting(TimeSlot::getStatus).isEqualTo(SlotStatus.FREE);
+        assertThat(timeSlotRepository.findById(partSlot.getId())).get().extracting(TimeSlot::getStatus).isEqualTo(SlotStatus.FREE);
     }
 }

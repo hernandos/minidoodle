@@ -6,6 +6,7 @@ import de.com.saenz.minidoodle.domain.model.User;
 import de.com.saenz.minidoodle.domain.repository.MeetingRepository;
 import de.com.saenz.minidoodle.domain.repository.TimeSlotRepository;
 import de.com.saenz.minidoodle.domain.repository.UserRepository;
+import de.com.saenz.minidoodle.domain.usecase.CancelMeetingUseCase;
 import de.com.saenz.minidoodle.domain.usecase.ScheduleMeetingCommand;
 import de.com.saenz.minidoodle.domain.usecase.ScheduleMeetingUseCase;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -17,14 +18,15 @@ import java.time.Instant;
 import java.util.*;
 
 /**
- * Application service orchestrating meeting scheduling.
+ * Application service orchestrating meeting scheduling and cancellation.
  * Enforces proactive availability by requiring pre-existing FREE slots for organizer and all participants,
  * atomically transitioning them to BUSY, and persisting the meeting.
+ * Releasing slots back to FREE upon meeting cancellation.
  */
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class MeetingApplicationService implements ScheduleMeetingUseCase {
+public class MeetingApplicationService implements ScheduleMeetingUseCase, CancelMeetingUseCase {
 
     private final MeetingRepository meetingRepository;
     private final TimeSlotRepository timeSlotRepository;
@@ -91,6 +93,21 @@ public class MeetingApplicationService implements ScheduleMeetingUseCase {
         return savedMeeting;
     }
 
+    @Override
+    public void cancelMeeting(Long meetingId) {
+        if (meetingId == null) {
+            throw new IllegalArgumentException("Meeting ID must not be null");
+        }
+        Meeting meeting = meetingRepository.findById(meetingId)
+                                           .orElseThrow(() -> new IllegalArgumentException("Meeting not found with id: " + meetingId));
+
+        for (TimeSlot slot : meeting.getTimeSlots()) {
+            slot.markAsFree();
+        }
+        timeSlotRepository.saveAll(meeting.getTimeSlots());
+        meetingRepository.deleteById(meetingId);
+    }
+
     private void validateCommand(ScheduleMeetingCommand command) {
         if (command == null) {
             throw new IllegalArgumentException("ScheduleMeetingCommand must not be null");
@@ -106,6 +123,9 @@ public class MeetingApplicationService implements ScheduleMeetingUseCase {
         }
         if (!command.startTime().isBefore(command.endTime())) {
             throw new IllegalArgumentException("Meeting start time must be strictly before end time");
+        }
+        if (command.participantIds() != null && command.participantIds().stream().anyMatch(Objects::isNull)) {
+            throw new IllegalArgumentException("Participant IDs must not contain null elements");
         }
     }
 }

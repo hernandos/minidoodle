@@ -22,7 +22,9 @@ CREATE TABLE time_slots
     start_time TIMESTAMP WITH TIME ZONE NOT NULL,
     end_time   TIMESTAMP WITH TIME ZONE NOT NULL,
     status     VARCHAR(20)              NOT NULL,
-    version    BIGINT                   NOT NULL DEFAULT 0
+    version    BIGINT                   NOT NULL DEFAULT 0,
+    CONSTRAINT chk_time_slots_timeframe CHECK (start_time < end_time),
+    CONSTRAINT chk_time_slots_status CHECK (status IN ('FREE', 'BUSY'))
 );
 
 CREATE INDEX idx_time_slots_user_start_end ON time_slots (user_id, start_time, end_time);

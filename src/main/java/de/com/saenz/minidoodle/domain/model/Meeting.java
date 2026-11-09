@@ -82,10 +82,24 @@ public class Meeting {
         if (slot == null) {
             throw new IllegalArgumentException("Consumed time slot cannot be null");
         }
+        if (slot.isFree()) {
+            throw new IllegalArgumentException("Cannot consume a FREE slot. Slot must be marked as BUSY");
+        }
         if (!timeSlots.isEmpty()) {
             TimeSlot first = timeSlots.getFirst();
             if (!first.matchesTimeframe(slot.getStartTime(), slot.getEndTime())) {
                 throw new IllegalArgumentException("All consumed slots in a meeting must match the exact same timeframe");
+            }
+        }
+        if (timeSlots.stream().anyMatch(existing ->
+                (slot.getId() != null && java.util.Objects.equals(existing.getId(), slot.getId())) || existing.equals(slot))) {
+            throw new IllegalArgumentException("Slot is already added to this meeting");
+        }
+        if (slot.getUser() != null && slot.getUser().getId() != null) {
+            boolean userAlreadyPresent = timeSlots.stream()
+                    .anyMatch(existing -> existing.getUser() != null && java.util.Objects.equals(existing.getUser().getId(), slot.getUser().getId()));
+            if (userAlreadyPresent) {
+                throw new IllegalArgumentException("A slot for user " + slot.getUser().getId() + " is already present in this meeting");
             }
         }
         timeSlots.add(slot);
