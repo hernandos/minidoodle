@@ -1,6 +1,6 @@
 package de.com.saenz.minidoodle.domain.model;
 
-import lombok.*;
+import lombok.Getter;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -11,35 +11,59 @@ import java.util.List;
  * Pure domain entity representing a scheduled meeting.
  * Created when converting available FREE slots of participants into booked BUSY events.
  * Meetings inherit the timeframe of the consumed slots and cannot have an independent duration.
+ *
+ * Invariant: all consumed slots must match the exact same timeframe.
+ * Enforced exclusively through {@link #addConsumedSlot(TimeSlot)}; the slot list is
+ * exposed read-only and construction is only possible via the static factories.
  */
 @Getter
-@Builder
-@NoArgsConstructor(access = AccessLevel.PACKAGE)
-@AllArgsConstructor(access = AccessLevel.PACKAGE)
 public class Meeting {
-    private Long id;
-    private String title;
-    private String description;
-    private User organizer;
+    private final Long id;
+    private final String title;
+    private final String description;
+    private final User organizer;
+    private final List<TimeSlot> timeSlots = new ArrayList<>();
 
-    @Builder.Default
-    private List<TimeSlot> timeSlots = new ArrayList<>();
+    private Meeting(Long id, String title, String description, User organizer) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.organizer = organizer;
+    }
 
-    Instant getStartTime() {
+    public static Meeting of(String title, String description, User organizer) {
+        return new Meeting(null, title, description, organizer);
+    }
+
+    public static Meeting reconstitute(Long id, String title, String description, User organizer, List<TimeSlot> slots) {
+        Meeting meeting = new Meeting(id, title, description, organizer);
+        if (slots != null) {
+            for (TimeSlot slot : slots) {
+                meeting.addConsumedSlot(slot);
+            }
+        }
+        return meeting;
+    }
+
+    public List<TimeSlot> getTimeSlots() {
+        return Collections.unmodifiableList(timeSlots);
+    }
+
+    public Instant getStartTime() {
         if (timeSlots == null || timeSlots.isEmpty()) {
             return null;
         }
         return timeSlots.getFirst().getStartTime();
     }
 
-    Instant getEndTime() {
+    public Instant getEndTime() {
         if (timeSlots == null || timeSlots.isEmpty()) {
             return null;
         }
         return timeSlots.getFirst().getEndTime();
     }
 
-    List<User> getParticipants() {
+    public List<User> getParticipants() {
         if (timeSlots == null) {
             return Collections.emptyList();
         }
@@ -50,12 +74,9 @@ public class Meeting {
                         .toList();
     }
 
-    void addConsumedSlot(TimeSlot slot) {
+    public void addConsumedSlot(TimeSlot slot) {
         if (slot == null) {
             throw new IllegalArgumentException("Consumed time slot cannot be null");
-        }
-        if (timeSlots == null) {
-            timeSlots = new ArrayList<>();
         }
         if (!timeSlots.isEmpty()) {
             TimeSlot first = timeSlots.getFirst();

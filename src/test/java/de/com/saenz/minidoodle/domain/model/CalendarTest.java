@@ -23,22 +23,22 @@ class CalendarTest {
         Instant end1 = start1.plus(Duration.ofHours(1));
 
         TimeSlot slot1 = TimeSlot.builder()
-                .id(100L)
-                .user(user)
-                .startTime(start1)
-                .endTime(end1)
-                .status(SlotStatus.FREE)
-                .build();
+                                 .id(100L)
+                                 .user(user)
+                                 .startTime(start1)
+                                 .endTime(end1)
+                                 .status(SlotStatus.FREE)
+                                 .build();
 
         calendar.addTimeSlot(slot1);
 
         TimeSlot overlappingSlot = TimeSlot.builder()
-                .id(101L)
-                .user(user)
-                .startTime(start1.plus(Duration.ofMinutes(30)))
-                .endTime(end1.plus(Duration.ofMinutes(30)))
-                .status(SlotStatus.FREE)
-                .build();
+                                           .id(101L)
+                                           .user(user)
+                                           .startTime(start1.plus(Duration.ofMinutes(30)))
+                                           .endTime(end1.plus(Duration.ofMinutes(30)))
+                                           .status(SlotStatus.FREE)
+                                           .build();
 
         assertThatThrownBy(() -> calendar.addTimeSlot(overlappingSlot))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -53,21 +53,21 @@ class CalendarTest {
 
         Instant start = Instant.parse("2026-11-09T09:00:00Z");
         TimeSlot slot = TimeSlot.builder()
-                .id(100L)
-                .user(user)
-                .startTime(start)
-                .endTime(start.plus(Duration.ofHours(1)))
-                .status(SlotStatus.FREE)
-                .build();
+                                .id(100L)
+                                .user(user)
+                                .startTime(start)
+                                .endTime(start.plus(Duration.ofHours(1)))
+                                .status(SlotStatus.FREE)
+                                .build();
         calendar.addTimeSlot(slot);
 
         TimeSlot movedSlot = TimeSlot.builder()
-                .id(100L)
-                .user(user)
-                .startTime(start.plus(Duration.ofMinutes(30)))
-                .endTime(start.plus(Duration.ofMinutes(90)))
-                .status(SlotStatus.FREE)
-                .build();
+                                     .id(100L)
+                                     .user(user)
+                                     .startTime(start.plus(Duration.ofMinutes(30)))
+                                     .endTime(start.plus(Duration.ofMinutes(90)))
+                                     .status(SlotStatus.FREE)
+                                     .build();
 
         assertThatThrownBy(() -> calendar.addTimeSlot(movedSlot))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -83,11 +83,11 @@ class CalendarTest {
 
         Instant start = Instant.parse("2026-11-09T09:00:00Z");
         TimeSlot slot = TimeSlot.builder()
-                .user(anotherUser)
-                .startTime(start)
-                .endTime(start.plus(Duration.ofHours(1)))
-                .status(SlotStatus.FREE)
-                .build();
+                                .user(anotherUser)
+                                .startTime(start)
+                                .endTime(start.plus(Duration.ofHours(1)))
+                                .status(SlotStatus.FREE)
+                                .build();
 
         assertThatThrownBy(() -> calendar.addTimeSlot(slot))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -104,12 +104,12 @@ class CalendarTest {
         Instant end = start.plus(Duration.ofMinutes(30));
 
         TimeSlot freeSlot = TimeSlot.builder()
-                .id(1L)
-                .user(user)
-                .startTime(start)
-                .endTime(end)
-                .status(SlotStatus.FREE)
-                .build();
+                                    .id(1L)
+                                    .user(user)
+                                    .startTime(start)
+                                    .endTime(end)
+                                    .status(SlotStatus.FREE)
+                                    .build();
 
         calendar.addTimeSlot(freeSlot);
 

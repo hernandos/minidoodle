@@ -38,15 +38,21 @@ dependencies {
     implementation("org.mapstruct:mapstruct:$mapstructVersion")
     implementation("org.apache.commons:commons-lang3:$commonsLang3Version")
 
+    implementation("org.liquibase:liquibase-core")
+    implementation("net.lbruun.springboot:preliquibase-spring-boot-starter:1.6.1")
+
     compileOnly("org.projectlombok:lombok:$lombokVersion")
 
-    runtimeOnly("com.h2database:h2")
+    runtimeOnly("org.postgresql:postgresql")
 
     annotationProcessor("org.projectlombok:lombok:$lombokVersion")
     annotationProcessor("org.mapstruct:mapstruct-processor:$mapstructVersion")
     annotationProcessor("org.projectlombok:lombok-mapstruct-binding:$lombokMapstructBindingVersion")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.boot:spring-boot-testcontainers")
+    testImplementation("org.testcontainers:postgresql")
+    testImplementation("org.testcontainers:junit-jupiter")
 }
 
 tasks.withType<JavaCompile> {
@@ -55,4 +61,10 @@ tasks.withType<JavaCompile> {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+
+    val colimaSocket = File(System.getProperty("user.home"), ".colima/default/docker.sock")
+    if (System.getenv("DOCKER_HOST") == null && colimaSocket.exists()) {
+        environment("DOCKER_HOST", "unix://${colimaSocket.absolutePath}")
+        environment("TESTCONTAINERS_RYUK_DISABLED", "true")
+    }
 }

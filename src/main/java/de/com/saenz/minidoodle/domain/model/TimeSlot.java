@@ -24,19 +24,19 @@ public class TimeSlot {
     @EqualsAndHashCode.Exclude
     private Long version;
 
-    boolean isFree() {
+    public boolean isFree() {
         return SlotStatus.FREE.equals(this.status);
     }
 
-    boolean isBusy() {
+    public boolean isBusy() {
         return SlotStatus.BUSY.equals(this.status);
     }
 
-    void markAsBusy() {
+    public void markAsBusy() {
         this.status = SlotStatus.BUSY;
     }
 
-    void markAsFree() {
+    public void markAsFree() {
         this.status = SlotStatus.FREE;
     }
 

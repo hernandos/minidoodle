@@ -24,9 +24,7 @@ class MeetingTest {
                 .status(SlotStatus.BUSY)
                 .build();
 
-        Meeting meeting = Meeting.builder()
-                .title("Architecture Review")
-                .build();
+        Meeting meeting = Meeting.of("Architecture Review", null, null);
 
         meeting.addConsumedSlot(slot);
 
@@ -50,9 +48,7 @@ class MeetingTest {
                 .endTime(end.plus(Duration.ofMinutes(15)))
                 .build();
 
-        Meeting meeting = Meeting.builder()
-                .title("Sprint Planning")
-                .build();
+        Meeting meeting = Meeting.of("Sprint Planning", null, null);
 
         meeting.addConsumedSlot(slot1);
 
@@ -75,9 +71,7 @@ class MeetingTest {
         TimeSlot slotBob = TimeSlot.builder().user(participant1).startTime(start).endTime(end).build();
         TimeSlot slotCharlie = TimeSlot.builder().user(participant2).startTime(start).endTime(end).build();
 
-        Meeting meeting = Meeting.builder()
-                .organizer(organizer)
-                .build();
+        Meeting meeting = Meeting.of(null, null, organizer);
 
         meeting.addConsumedSlot(slotOrg);
         meeting.addConsumedSlot(slotBob);

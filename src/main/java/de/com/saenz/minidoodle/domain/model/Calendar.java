@@ -29,11 +29,11 @@ public class Calendar {
         this.user = user;
     }
 
-    static Calendar of(User user) {
+    public static Calendar of(User user) {
         return new Calendar(user);
     }
 
-    static Calendar of(User user, List<TimeSlot> slots) {
+    public static Calendar of(User user, List<TimeSlot> slots) {
         Calendar calendar = new Calendar(user);
         if (slots != null) {
             for (TimeSlot slot : slots) {
@@ -43,7 +43,7 @@ public class Calendar {
         return calendar;
     }
 
-    SortedSet<TimeSlot> getTimeSlots() {
+    public SortedSet<TimeSlot> getTimeSlots() {
         return Collections.unmodifiableSortedSet(timeSlots);
     }
 
@@ -74,28 +74,28 @@ public class Calendar {
         return timeSlots.stream().anyMatch(existing -> existing.overlapsWith(candidate));
     }
 
-    Optional<TimeSlot> findMatchingFreeSlot(Instant start, Instant end) {
+    public Optional<TimeSlot> findMatchingFreeSlot(Instant start, Instant end) {
         return timeSlots.stream()
                         .filter(TimeSlot::isFree)
                         .filter(slot -> slot.matchesTimeframe(start, end))
                         .findFirst();
     }
 
-    List<TimeSlot> getFreeSlots() {
+    public List<TimeSlot> getFreeSlots() {
         return timeSlots.stream().filter(TimeSlot::isFree).toList();
     }
 
-    List<TimeSlot> getBusySlots() {
+    public List<TimeSlot> getBusySlots() {
         return timeSlots.stream().filter(TimeSlot::isBusy).toList();
     }
 
-    List<TimeSlot> getSlotsBetween(Instant start, Instant end) {
+    public List<TimeSlot> getSlotsBetween(Instant start, Instant end) {
         return timeSlots.stream()
                         .filter(slot -> slot.overlapsWith(start, end))
                         .toList();
     }
 
-    List<TimeSlot> getFreeSlotsBetween(Instant start, Instant end) {
+    public List<TimeSlot> getFreeSlotsBetween(Instant start, Instant end) {
         return timeSlots.stream()
                         .filter(TimeSlot::isFree)
                         .filter(slot -> slot.overlapsWith(start, end))

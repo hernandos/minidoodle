@@ -16,22 +16,22 @@ class TimeSlotTest {
     void overlapsWith_shouldReturnTrue_whenSlotsOverlap() {
         Instant now = Instant.parse("2026-11-09T10:00:00Z");
         TimeSlot slot1 = TimeSlot.builder()
-                .startTime(now)
-                .endTime(now.plus(Duration.ofHours(1)))
-                .status(SlotStatus.FREE)
-                .build();
+                                 .startTime(now)
+                                 .endTime(now.plus(Duration.ofHours(1)))
+                                 .status(SlotStatus.FREE)
+                                 .build();
 
         TimeSlot overlappingSlot = TimeSlot.builder()
-                .startTime(now.plus(Duration.ofMinutes(30)))
-                .endTime(now.plus(Duration.ofHours(2)))
-                .status(SlotStatus.FREE)
-                .build();
+                                           .startTime(now.plus(Duration.ofMinutes(30)))
+                                           .endTime(now.plus(Duration.ofHours(2)))
+                                           .status(SlotStatus.FREE)
+                                           .build();
 
         TimeSlot nonOverlappingSlot = TimeSlot.builder()
-                .startTime(now.plus(Duration.ofHours(1)))
-                .endTime(now.plus(Duration.ofHours(2)))
-                .status(SlotStatus.FREE)
-                .build();
+                                              .startTime(now.plus(Duration.ofHours(1)))
+                                              .endTime(now.plus(Duration.ofHours(2)))
+                                              .status(SlotStatus.FREE)
+                                              .build();
 
         assertThat(slot1.overlapsWith(overlappingSlot)).isTrue();
         assertThat(slot1.overlapsWith(nonOverlappingSlot)).isFalse();
@@ -41,8 +41,8 @@ class TimeSlotTest {
     @DisplayName("should update status when marked as busy or free")
     void markAsBusy_shouldUpdateStatus_whenCalled() {
         TimeSlot slot = TimeSlot.builder()
-                .status(SlotStatus.FREE)
-                .build();
+                                .status(SlotStatus.FREE)
+                                .build();
 
         assertThat(slot.isFree()).isTrue();
         assertThat(slot.isBusy()).isFalse();
@@ -62,9 +62,9 @@ class TimeSlotTest {
         Instant end = start.plus(Duration.ofMinutes(45));
 
         TimeSlot slot = TimeSlot.builder()
-                .startTime(start)
-                .endTime(end)
-                .build();
+                                .startTime(start)
+                                .endTime(end)
+                                .build();
 
         assertThat(slot.getDuration()).isEqualTo(Duration.ofMinutes(45));
     }
@@ -76,9 +76,9 @@ class TimeSlotTest {
         Instant end = start.plus(Duration.ofHours(1));
 
         TimeSlot slot = TimeSlot.builder()
-                .startTime(start)
-                .endTime(end)
-                .build();
+                                .startTime(start)
+                                .endTime(end)
+                                .build();
 
         Instant newStart = start.plus(Duration.ofHours(2));
         Instant newEnd = newStart.plus(Duration.ofHours(1));
@@ -96,9 +96,9 @@ class TimeSlotTest {
         Instant end = start.plus(Duration.ofHours(1));
 
         TimeSlot slot = TimeSlot.builder()
-                .startTime(start)
-                .endTime(end)
-                .build();
+                                .startTime(start)
+                                .endTime(end)
+                                .build();
 
         assertThatThrownBy(() -> slot.updateTimeframe(end, start))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -110,9 +110,9 @@ class TimeSlotTest {
     void validate_shouldThrowException_whenStartTimeAfterEndTime() {
         Instant now = Instant.parse("2026-11-09T10:00:00Z");
         TimeSlot invalidSlot = TimeSlot.builder()
-                .startTime(now)
-                .endTime(now.minus(Duration.ofMinutes(30)))
-                .build();
+                                       .startTime(now)
+                                       .endTime(now.minus(Duration.ofMinutes(30)))
+                                       .build();
 
         assertThatThrownBy(invalidSlot::validate)
                 .isInstanceOf(IllegalArgumentException.class)
