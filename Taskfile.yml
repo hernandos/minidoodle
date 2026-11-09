@@ -1,0 +1,33 @@
+version: '3'
+
+tasks:
+
+  default:
+    cmds:
+      - task -l
+    silent: true
+
+  check-md:
+    desc: "check the format according to the common pipeline"
+    cmds:
+      - markdownlint -c .markdownlint.yml -d ./docs --fix
+    silent: false
+
+  check-yml:
+    desc: "check the format according to the common pipeline"
+    cmds:
+      - yamllint .
+    silent: false
+
+  check-git:
+    desc: "check git hooks pre commit"
+    cmds:
+      - pre-commit run --all-files
+    silent: false
+
+  pre-commit-install:
+    desc: "install pre-commits and runs the first time"
+    cmds:
+      - pre-commit install --hook-type pre-commit --hook-type commit-msg
+      - pre-commit run --all-files
+    silent: false
