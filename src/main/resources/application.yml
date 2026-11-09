@@ -19,3 +19,8 @@ spring:
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
     enabled: true
+
+logging:
+  level:
+    root: INFO
+    de.com.saenz.minidoodle: INFO
