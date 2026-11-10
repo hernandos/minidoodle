@@ -15,6 +15,36 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - minidoodle-network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: minidoodle-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/minidoodle
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep -q '\"status\":\"UP\"'" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 25s
+    networks:
+      - minidoodle-network
 
 volumes:
   postgres_data:
+
+networks:
+  minidoodle-network:
+    driver: bridge
