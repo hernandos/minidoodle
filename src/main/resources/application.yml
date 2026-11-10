@@ -32,9 +32,9 @@ management:
       probes:
         enabled: true
     metrics:
-      enabled: true
+      access: read_only
     prometheus:
-      enabled: true
+      access: read_only
   metrics:
     tags:
       application: ${spring.application.name}
