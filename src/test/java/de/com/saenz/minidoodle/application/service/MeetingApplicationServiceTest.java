@@ -1,5 +1,6 @@
 package de.com.saenz.minidoodle.application.service;
 
+import de.com.saenz.minidoodle.domain.exception.ResourceNotFoundException;
 import de.com.saenz.minidoodle.domain.model.Meeting;
 import de.com.saenz.minidoodle.domain.model.SlotStatus;
 import de.com.saenz.minidoodle.domain.model.TimeSlot;
@@ -32,26 +33,19 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class MeetingApplicationServiceTest {
 
-    @Mock
-    private MeetingRepository meetingRepository;
-
-    @Mock
-    private TimeSlotRepository timeSlotRepository;
-
-    @Mock
-    private UserRepository userRepository;
-
-    @Mock
-    private MeterRegistry meterRegistry;
-
-    @Mock
-    private Counter counter;
-
-    private MeetingApplicationService meetingApplicationService;
-
     private final Instant start = Instant.parse("2026-11-10T14:00:00Z");
     private final Instant end = start.plus(Duration.ofMinutes(45));
-
+    @Mock
+    private MeetingRepository meetingRepository;
+    @Mock
+    private TimeSlotRepository timeSlotRepository;
+    @Mock
+    private UserRepository userRepository;
+    @Mock
+    private MeterRegistry meterRegistry;
+    @Mock
+    private Counter counter;
+    private MeetingApplicationService meetingApplicationService;
     private User organizer;
     private User participant;
 
@@ -199,25 +193,25 @@ class MeetingApplicationServiceTest {
     }
 
     @Test
-    @DisplayName("scheduleMeeting should throw IllegalArgumentException when organizer is not found")
-    void scheduleMeeting_shouldThrowIllegalArgumentException_whenOrganizerNotFound() {
+    @DisplayName("scheduleMeeting should throw ResourceNotFoundException when organizer is not found")
+    void scheduleMeeting_shouldThrowResourceNotFoundException_whenOrganizerNotFound() {
         ScheduleMeetingCommand command = new ScheduleMeetingCommand("Sync", null, 99L, List.of(), start, end);
         when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> meetingApplicationService.scheduleMeeting(command))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Organizer not found with id: 99");
     }
 
     @Test
-    @DisplayName("scheduleMeeting should throw IllegalArgumentException when participant user does not exist")
-    void scheduleMeeting_shouldThrowIllegalArgumentException_whenParticipantNotFound() {
+    @DisplayName("scheduleMeeting should throw ResourceNotFoundException when participant user does not exist")
+    void scheduleMeeting_shouldThrowResourceNotFoundException_whenParticipantNotFound() {
         ScheduleMeetingCommand command = new ScheduleMeetingCommand("Sync", null, 1L, List.of(99L), start, end);
         when(userRepository.findById(1L)).thenReturn(Optional.of(organizer));
         when(userRepository.findMissingIds(anyCollection())).thenReturn(List.of(99L));
 
         assertThatThrownBy(() -> meetingApplicationService.scheduleMeeting(command))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Users not found with ids: [99]");
     }
 
@@ -253,12 +247,12 @@ class MeetingApplicationServiceTest {
     }
 
     @Test
-    @DisplayName("cancelMeeting should throw IllegalArgumentException when meeting does not exist")
-    void cancelMeeting_shouldThrowIllegalArgumentException_whenMeetingNotFound() {
+    @DisplayName("cancelMeeting should throw ResourceNotFoundException when meeting does not exist")
+    void cancelMeeting_shouldThrowResourceNotFoundException_whenMeetingNotFound() {
         when(meetingRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> meetingApplicationService.cancelMeeting(99L))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Meeting not found with id: 99");
     }
 }

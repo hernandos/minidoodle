@@ -49,6 +49,12 @@ public class MeetingRepositoryAdapter implements MeetingRepository {
     }
 
     @Override
+    public List<Meeting> findByOrganizerIdAndParticipantUserId(Long organizerId, Long participantId) {
+        return meetingEntityMapper.toDomainList(
+                springDataMeetingRepository.findDistinctByOrganizer_IdAndTimeSlots_User_Id(organizerId, participantId));
+    }
+
+    @Override
     public void deleteById(Long id) {
         springDataMeetingRepository.deleteById(id);
     }

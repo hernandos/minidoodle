@@ -10,7 +10,6 @@ import de.com.saenz.minidoodle.infrastructure.api.model.TimeSlotResponse;
 import de.com.saenz.minidoodle.infrastructure.api.model.UserAvailabilityResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -73,16 +72,16 @@ public class AvailabilityController {
         }
 
         return calendarOpt.map(apiDtoMapper::toUserAvailabilityResponse)
-                               .orElseThrow(() -> new ResourceNotFoundException("User availability not found for user id: " + userId));
+                          .orElseThrow(() -> new ResourceNotFoundException("User availability not found for user id: " + userId));
     }
 
     @Operation(
             summary = "Get aggregated availability view across users",
-            description = "Queries availability across all users (or a specific subset of user IDs) within a required timeframe. Allows filtering by free-only slots via the 'freeOnly' flag."
+            description = "Queries availability across all users (or a specific subset of user IDs) within a required timeframe. Allows filtering by free-only slots via the 'freeOnly' flag. The timeframe delimits the result set."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Aggregated slots retrieved successfully",
-                         content = @Content(array = @ArraySchema(schema = @Schema(implementation = TimeSlotResponse.class)))),
+                         content = @Content(schema = @Schema(implementation = TimeSlotResponse.class))),
             @ApiResponse(responseCode = "400",
                          description = "Missing or invalid timeframe (startTime must be before endTime)",
                          content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
@@ -105,24 +104,17 @@ public class AvailabilityController {
             @RequestParam(defaultValue = "false") boolean freeOnly) {
 
         List<TimeSlot> slots;
+        boolean hasUserFilter = userIds != null && !userIds.isEmpty();
         if (freeOnly) {
-            if (userIds != null && !userIds.isEmpty()) {
-                slots = getAggregatedAvailabilityQuery.getAggregatedFreeAvailability(userIds, startTime, endTime);
-            } else {
-                slots = getAggregatedFreeAvailabilityQuery(startTime, endTime);
-            }
+            slots = hasUserFilter
+                    ? getAggregatedAvailabilityQuery.getAggregatedFreeAvailability(userIds, startTime, endTime)
+                    : getAggregatedAvailabilityQuery.getAggregatedFreeAvailability(startTime, endTime);
         } else {
-            if (userIds != null && !userIds.isEmpty()) {
-                slots = getAggregatedAvailabilityQuery.getAggregatedAvailability(userIds, startTime, endTime);
-            } else {
-                slots = getAggregatedAvailabilityQuery.getAggregatedAvailability(startTime, endTime);
-            }
+            slots = hasUserFilter
+                    ? getAggregatedAvailabilityQuery.getAggregatedAvailability(userIds, startTime, endTime)
+                    : getAggregatedAvailabilityQuery.getAggregatedAvailability(startTime, endTime);
         }
 
         return apiDtoMapper.toTimeSlotResponseList(slots);
-    }
-
-    private List<TimeSlot> getAggregatedFreeAvailabilityQuery(Instant startTime, Instant endTime) {
-        return getAggregatedAvailabilityQuery.getAggregatedFreeAvailability(startTime, endTime);
     }
 }

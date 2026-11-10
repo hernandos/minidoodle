@@ -10,6 +10,7 @@ import de.com.saenz.minidoodle.infrastructure.api.mapper.ApiDtoMapper;
 import de.com.saenz.minidoodle.infrastructure.api.model.TimeSlotResponse;
 import de.com.saenz.minidoodle.infrastructure.api.model.UserAvailabilityResponse;
 import de.com.saenz.minidoodle.infrastructure.api.model.UserResponse;
+import de.com.saenz.minidoodle.infrastructure.api.model.UserSummaryResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,27 +31,24 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(AvailabilityController.class)
 class AvailabilityControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @MockitoBean
-    private GetUserCalendarQuery getUserCalendarQuery;
-
-    @MockitoBean
-    private GetAggregatedAvailabilityQuery getAggregatedAvailabilityQuery;
-
-    @MockitoBean
-    private ApiDtoMapper apiDtoMapper;
-
     private final Instant start = Instant.parse("2026-11-15T08:00:00Z");
     private final Instant end = start.plus(Duration.ofHours(4));
+    @Autowired
+    private MockMvc mockMvc;
+    @MockitoBean
+    private GetUserCalendarQuery getUserCalendarQuery;
+    @MockitoBean
+    private GetAggregatedAvailabilityQuery getAggregatedAvailabilityQuery;
+    @MockitoBean
+    private ApiDtoMapper apiDtoMapper;
 
     @Test
     @DisplayName("GET /api/v1/availability/users/{userId} should return user availability when found")
     void getUserCalendar_shouldReturnCalendar_whenFound() throws Exception {
         User user = User.builder().id(1L).username("alice").build();
         Calendar domainCalendar = Calendar.of(user);
-        UserAvailabilityResponse responseDto = new UserAvailabilityResponse(new UserResponse(1L, "alice", null, null), List.of());
+        UserAvailabilityResponse responseDto = new UserAvailabilityResponse(new UserResponse(1L, "alice", null, null),
+                                                                            List.of());
 
         when(getUserCalendarQuery.getUserCalendar(1L)).thenReturn(Optional.of(domainCalendar));
         when(apiDtoMapper.toUserAvailabilityResponse(domainCalendar)).thenReturn(responseDto);
@@ -77,7 +75,8 @@ class AvailabilityControllerTest {
     void getUserCalendar_withTimestamps_shouldFilterByRange() throws Exception {
         User user = User.builder().id(1L).username("alice").build();
         Calendar domainCalendar = Calendar.of(user);
-        UserAvailabilityResponse responseDto = new UserAvailabilityResponse(new UserResponse(1L, "alice", null, null), List.of());
+        UserAvailabilityResponse responseDto = new UserAvailabilityResponse(new UserResponse(1L, "alice", null, null),
+                                                                            List.of());
 
         when(getUserCalendarQuery.getUserCalendar(1L, start, end)).thenReturn(Optional.of(domainCalendar));
         when(apiDtoMapper.toUserAvailabilityResponse(domainCalendar)).thenReturn(responseDto);
@@ -103,10 +102,10 @@ class AvailabilityControllerTest {
                                 .status(SlotStatus.FREE)
                                 .build();
         TimeSlotResponse slotResponse = new TimeSlotResponse(10L,
-                                                             new UserResponse(1L, "alice", null, null),
+                                                             new UserSummaryResponse(1L, "alice"),
                                                              start,
                                                              end,
-                                                             "FREE");
+                                                             SlotStatus.FREE);
 
         when(getAggregatedAvailabilityQuery.getAggregatedAvailability(start, end)).thenReturn(List.of(slot));
         when(apiDtoMapper.toTimeSlotResponseList(List.of(slot))).thenReturn(List.of(slotResponse));

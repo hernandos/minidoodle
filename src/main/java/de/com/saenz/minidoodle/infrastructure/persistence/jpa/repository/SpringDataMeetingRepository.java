@@ -29,4 +29,7 @@ public interface SpringDataMeetingRepository extends JpaRepository<MeetingEntity
 
     @EntityGraph(attributePaths = {"organizer", "timeSlots", "timeSlots.user"})
     List<MeetingEntity> findDistinctByTimeSlots_User_Id(Long userId);
+
+    @EntityGraph(attributePaths = {"organizer", "timeSlots", "timeSlots.user"})
+    List<MeetingEntity> findDistinctByOrganizer_IdAndTimeSlots_User_Id(Long organizerId, Long userId);
 }

@@ -29,6 +29,11 @@ public class MeetingQueryService implements GetMeetingQuery {
     }
 
     @Override
+    public List<Meeting> getAllMeetings() {
+        return meetingRepository.findAll();
+    }
+
+    @Override
     public List<Meeting> getMeetingsByOrganizer(Long organizerId) {
         if (organizerId == null) {
             return List.of();
@@ -42,5 +47,13 @@ public class MeetingQueryService implements GetMeetingQuery {
             return List.of();
         }
         return meetingRepository.findByParticipantUserId(userId);
+    }
+
+    @Override
+    public List<Meeting> getMeetingsByOrganizerAndParticipant(Long organizerId, Long participantId) {
+        if (organizerId == null || participantId == null) {
+            return List.of();
+        }
+        return meetingRepository.findByOrganizerIdAndParticipantUserId(organizerId, participantId);
     }
 }

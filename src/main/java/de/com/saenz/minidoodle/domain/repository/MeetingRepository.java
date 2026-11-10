@@ -21,6 +21,8 @@ public interface MeetingRepository {
 
     List<Meeting> findByParticipantUserId(Long userId);
 
+    List<Meeting> findByOrganizerIdAndParticipantUserId(Long organizerId, Long participantId);
+
     void deleteById(Long id);
 
     boolean existsById(Long id);

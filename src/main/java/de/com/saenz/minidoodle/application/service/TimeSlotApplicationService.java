@@ -1,5 +1,6 @@
 package de.com.saenz.minidoodle.application.service;
 
+import de.com.saenz.minidoodle.domain.exception.ResourceNotFoundException;
 import de.com.saenz.minidoodle.domain.model.SlotStatus;
 import de.com.saenz.minidoodle.domain.model.TimeSlot;
 import de.com.saenz.minidoodle.domain.model.User;
@@ -41,7 +42,7 @@ public class TimeSlotApplicationService implements CreateTimeSlotUseCase, Update
         User user = userRepository.findById(userId)
                                   .orElseThrow(() -> {
                                       log.warn("createTimeSlot failed: User not found with id {}", userId);
-                                      return new IllegalArgumentException("User not found with id: " + userId);
+                                      return new ResourceNotFoundException("User not found with id: " + userId);
                                   });
 
         List<TimeSlot> overlapping = timeSlotRepository.findByUserIdAndTimeRange(userId, startTime, endTime);
@@ -51,7 +52,7 @@ public class TimeSlotApplicationService implements CreateTimeSlotUseCase, Update
                      userId,
                      startTime,
                      endTime);
-            throw new IllegalArgumentException(String.format(
+            throw new IllegalStateException(String.format(
                     "Time slot [%s - %s] overlaps with existing slot [%s - %s] for user %d",
                     startTime, endTime, conflict.getStartTime(), conflict.getEndTime(), userId
             ));
@@ -85,7 +86,7 @@ public class TimeSlotApplicationService implements CreateTimeSlotUseCase, Update
         TimeSlot slot = timeSlotRepository.findById(slotId)
                                           .orElseThrow(() -> {
                                               log.warn("updateTimeSlot failed: Time slot not found with id {}", slotId);
-                                              return new IllegalArgumentException("Time slot not found with id: " + slotId);
+                                              return new ResourceNotFoundException("Time slot not found with id: " + slotId);
                                           });
 
         if (slot.isBusy()) {
@@ -99,7 +100,7 @@ public class TimeSlotApplicationService implements CreateTimeSlotUseCase, Update
         if (hasOverlap) {
             log.warn("updateTimeSlot failed: New timeframe [{} - {}] overlaps with another slot for user {}",
                      newStartTime, newEndTime, userId);
-            throw new IllegalArgumentException(String.format(
+            throw new IllegalStateException(String.format(
                     "New timeframe [%s - %s] overlaps with an existing slot for user %d",
                     newStartTime, newEndTime, userId
             ));
@@ -123,7 +124,7 @@ public class TimeSlotApplicationService implements CreateTimeSlotUseCase, Update
         TimeSlot slot = timeSlotRepository.findById(slotId)
                                           .orElseThrow(() -> {
                                               log.warn("deleteTimeSlot failed: Time slot not found with id {}", slotId);
-                                              return new IllegalArgumentException("Time slot not found with id: " + slotId);
+                                              return new ResourceNotFoundException("Time slot not found with id: " + slotId);
                                           });
 
         if (slot.isBusy()) {

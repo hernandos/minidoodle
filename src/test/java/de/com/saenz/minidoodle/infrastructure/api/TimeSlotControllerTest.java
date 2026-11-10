@@ -11,7 +11,7 @@ import de.com.saenz.minidoodle.infrastructure.api.mapper.ApiDtoMapper;
 import de.com.saenz.minidoodle.infrastructure.api.model.CreateTimeSlotRequest;
 import de.com.saenz.minidoodle.infrastructure.api.model.TimeSlotResponse;
 import de.com.saenz.minidoodle.infrastructure.api.model.UpdateTimeSlotRequest;
-import de.com.saenz.minidoodle.infrastructure.api.model.UserResponse;
+import de.com.saenz.minidoodle.infrastructure.api.model.UserSummaryResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,26 +33,20 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(TimeSlotController.class)
 class TimeSlotControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @MockitoBean
-    private CreateTimeSlotUseCase createTimeSlotUseCase;
-
-    @MockitoBean
-    private UpdateTimeSlotUseCase updateTimeSlotUseCase;
-
-    @MockitoBean
-    private DeleteTimeSlotUseCase deleteTimeSlotUseCase;
-
-    @MockitoBean
-    private ApiDtoMapper apiDtoMapper;
-
     private final Instant start = Instant.parse("2026-11-15T09:00:00Z");
     private final Instant end = start.plus(Duration.ofHours(1));
+    @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private ObjectMapper objectMapper;
+    @MockitoBean
+    private CreateTimeSlotUseCase createTimeSlotUseCase;
+    @MockitoBean
+    private UpdateTimeSlotUseCase updateTimeSlotUseCase;
+    @MockitoBean
+    private DeleteTimeSlotUseCase deleteTimeSlotUseCase;
+    @MockitoBean
+    private ApiDtoMapper apiDtoMapper;
 
     @Test
     @DisplayName("POST /api/v1/time-slots should create slot and return 201 Created")
@@ -67,10 +61,10 @@ class TimeSlotControllerTest {
                                       .status(SlotStatus.FREE)
                                       .build();
         TimeSlotResponse responseDto = new TimeSlotResponse(10L,
-                                                            new UserResponse(1L, "alice", null, null),
+                                                            new UserSummaryResponse(1L, "alice"),
                                                             start,
                                                             end,
-                                                            "FREE");
+                                                            SlotStatus.FREE);
 
         when(createTimeSlotUseCase.createTimeSlot(1L, start, end)).thenReturn(domainSlot);
         when(apiDtoMapper.toTimeSlotResponse(domainSlot)).thenReturn(responseDto);
@@ -103,21 +97,19 @@ class TimeSlotControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/v1/time-slots should return 400 Bad Request when use case throws IllegalArgumentException")
+    @DisplayName("POST /api/v1/time-slots should return 400 Bad Request when timeframe is invalid (DTO validation)")
     void createTimeSlot_shouldReturn400_whenTimeframeInvalid() throws Exception {
         CreateTimeSlotRequest request = new CreateTimeSlotRequest(1L, end, start);
-
-        when(createTimeSlotUseCase.createTimeSlot(1L, end, start))
-                .thenThrow(new IllegalArgumentException("Start time must be strictly before end time"));
 
         mockMvc.perform(post("/api/v1/time-slots")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
                .andExpect(status().isBadRequest())
-               .andExpect(jsonPath("$.title").value("Invalid Argument"))
+               .andExpect(jsonPath("$.title").value("Validation Failed"))
                .andExpect(jsonPath("$.status").value(400))
-               .andExpect(jsonPath("$.detail").value("Start time must be strictly before end time"))
                .andExpect(jsonPath("$.timestamp").exists());
+
+        verify(createTimeSlotUseCase, never()).createTimeSlot(any(), any(), any());
     }
 
     @Test
@@ -125,7 +117,7 @@ class TimeSlotControllerTest {
     void updateTimeSlot_shouldReturnOk_whenValid() throws Exception {
         UpdateTimeSlotRequest request = new UpdateTimeSlotRequest(start, end);
         TimeSlot domainSlot = TimeSlot.builder().id(10L).startTime(start).endTime(end).status(SlotStatus.FREE).build();
-        TimeSlotResponse responseDto = new TimeSlotResponse(10L, null, start, end, "FREE");
+        TimeSlotResponse responseDto = new TimeSlotResponse(10L, null, start, end, SlotStatus.FREE);
 
         when(updateTimeSlotUseCase.updateTimeSlot(eq(10L), eq(start), eq(end))).thenReturn(domainSlot);
         when(apiDtoMapper.toTimeSlotResponse(domainSlot)).thenReturn(responseDto);

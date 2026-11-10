@@ -96,8 +96,8 @@ class ApplicationServicesIntegrationTest {
 
         // 2. Query aggregated free availability for the 3 users
         List<Long> userIds = List.of(organizer.getId(), participant1.getId(), participant2.getId());
-        List<TimeSlot> freeSlots = aggregatedAvailabilityQuery.getAggregatedFreeAvailability(userIds, start, end);
-        assertThat(freeSlots).hasSize(3);
+        assertThat(aggregatedAvailabilityQuery.getAggregatedFreeAvailability(userIds, start, end))
+                .hasSize(3);
 
         // 3. Schedule meeting
         ScheduleMeetingCommand command = new ScheduleMeetingCommand(
@@ -127,10 +127,8 @@ class ApplicationServicesIntegrationTest {
         assertThat(reloadedP2Slot).isPresent().get().extracting(TimeSlot::getStatus).isEqualTo(SlotStatus.BUSY);
 
         // 5. Query aggregated free availability now yields zero free slots
-        List<TimeSlot> updatedFreeSlots = aggregatedAvailabilityQuery.getAggregatedFreeAvailability(userIds,
-                                                                                                    start,
-                                                                                                    end);
-        assertThat(updatedFreeSlots).isEmpty();
+        assertThat(aggregatedAvailabilityQuery.getAggregatedFreeAvailability(userIds, start, end))
+                .isEmpty();
 
         // 6. Attempting to schedule another meeting for the same timeframe fails because slots are now BUSY
         ScheduleMeetingCommand conflictCommand = new ScheduleMeetingCommand(

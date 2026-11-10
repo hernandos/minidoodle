@@ -100,10 +100,12 @@ class SchedulingFlowIntegrationTest {
                .andExpect(jsonPath("$.length()").value(2));
 
         // 5. Schedule Meeting: POST /api/v1/meetings
-        ScheduleMeetingRequest meetingReq = new ScheduleMeetingRequest(
-                "Sprint Demo", "Show progress to stakeholders",
-                organizer.getId(), List.of(participant.getId()), start, end
-        );
+        ScheduleMeetingRequest meetingReq = new ScheduleMeetingRequest("Sprint Demo",
+                                                                       "Show progress to stakeholders",
+                                                                       organizer.getId(),
+                                                                       List.of(participant.getId()),
+                                                                       start,
+                                                                       end);
         String meetingJson = mockMvc.perform(post("/api/v1/meetings")
                                                      .contentType(MediaType.APPLICATION_JSON)
                                                      .content(objectMapper.writeValueAsString(meetingReq)))
@@ -112,7 +114,7 @@ class SchedulingFlowIntegrationTest {
                                     .andExpect(jsonPath("$.title").value("Sprint Demo"))
                                     .andExpect(jsonPath("$.timeSlots.length()").value(2))
                                     .andReturn().getResponse().getContentAsString();
-        Long meetingId = objectMapper.readTree(meetingJson).get("id").asLong();
+        long meetingId = objectMapper.readTree(meetingJson).get("id").asLong();
 
         // 6. Verify slots transitioned to BUSY in database
         assertThat(timeSlotRepository.findById(orgSlotId)).get()

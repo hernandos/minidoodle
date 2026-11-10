@@ -33,26 +33,20 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(MeetingController.class)
 class MeetingControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @MockitoBean
-    private ScheduleMeetingUseCase scheduleMeetingUseCase;
-
-    @MockitoBean
-    private CancelMeetingUseCase cancelMeetingUseCase;
-
-    @MockitoBean
-    private GetMeetingQuery getMeetingQuery;
-
-    @MockitoBean
-    private ApiDtoMapper apiDtoMapper;
-
     private final Instant start = Instant.parse("2026-11-15T14:00:00Z");
     private final Instant end = start.plus(Duration.ofHours(1));
+    @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private ObjectMapper objectMapper;
+    @MockitoBean
+    private ScheduleMeetingUseCase scheduleMeetingUseCase;
+    @MockitoBean
+    private CancelMeetingUseCase cancelMeetingUseCase;
+    @MockitoBean
+    private GetMeetingQuery getMeetingQuery;
+    @MockitoBean
+    private ApiDtoMapper apiDtoMapper;
 
     @Test
     @DisplayName("POST /api/v1/meetings should schedule meeting and return 201 Created")
@@ -154,6 +148,62 @@ class MeetingControllerTest {
 
         mockMvc.perform(get("/api/v1/meetings/999"))
                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/meetings?organizerId=1 should return meetings organized by user")
+    void getMeetings_byOrganizer_shouldReturnMeetings() throws Exception {
+        User org = User.builder().id(1L).username("org").build();
+        Meeting meeting = Meeting.of("Sync", null, org);
+        MeetingResponse responseDto = new MeetingResponse(
+                50L, "Sync", null, new UserResponse(1L, "org", null, null),
+                start, end, List.of(), List.of()
+        );
+
+        when(getMeetingQuery.getMeetingsByOrganizer(1L)).thenReturn(List.of(meeting));
+        when(apiDtoMapper.toMeetingResponseList(List.of(meeting))).thenReturn(List.of(responseDto));
+
+        mockMvc.perform(get("/api/v1/meetings").param("organizerId", "1"))
+               .andExpect(status().isOk())
+               .andExpect(jsonPath("$[0].id").value(50));
+
+        verify(getMeetingQuery).getMeetingsByOrganizer(1L);
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/meetings without filters should return all meetings")
+    void getMeetings_withoutFilters_shouldReturnAllMeetings() throws Exception {
+        when(getMeetingQuery.getAllMeetings()).thenReturn(List.of());
+        when(apiDtoMapper.toMeetingResponseList(List.of())).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/v1/meetings"))
+               .andExpect(status().isOk())
+               .andExpect(jsonPath("$").isEmpty());
+
+        verify(getMeetingQuery).getAllMeetings();
+    }
+
+    @Test
+    @DisplayName(
+            "GET /api/v1/meetings with both organizerId and participantId should return meetings organized by user where participant attends")
+    void getMeetings_withBothFilters_shouldReturnCombinedResults() throws Exception {
+        User org = User.builder().id(1L).username("org").build();
+        Meeting meeting = Meeting.of("Sync", null, org);
+        MeetingResponse responseDto = new MeetingResponse(
+                50L, "Sync", null, new UserResponse(1L, "org", null, null),
+                start, end, List.of(), List.of()
+        );
+
+        when(getMeetingQuery.getMeetingsByOrganizerAndParticipant(1L, 2L)).thenReturn(List.of(meeting));
+        when(apiDtoMapper.toMeetingResponseList(List.of(meeting))).thenReturn(List.of(responseDto));
+
+        mockMvc.perform(get("/api/v1/meetings")
+                                .param("organizerId", "1")
+                                .param("participantId", "2"))
+               .andExpect(status().isOk())
+               .andExpect(jsonPath("$[0].id").value(50));
+
+        verify(getMeetingQuery).getMeetingsByOrganizerAndParticipant(1L, 2L);
     }
 
     @Test

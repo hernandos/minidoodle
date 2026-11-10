@@ -3,11 +3,18 @@ package de.com.saenz.minidoodle.infrastructure.api;
 import de.com.saenz.minidoodle.domain.exception.ResourceNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
+import org.springframework.beans.TypeMismatchException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
-import org.springframework.http.ProblemDetail;
+import org.springframework.http.*;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.time.Instant;
@@ -23,11 +30,10 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     private static final String UNEXPECTED_ERROR = "An unexpected error occurred. Please contact support.";
 
     @Override
-    protected org.springframework.http.ResponseEntity<Object> handleMethodArgumentNotValid(
-            org.springframework.web.bind.MethodArgumentNotValidException ex,
-            org.springframework.http.HttpHeaders headers,
-            org.springframework.http.HttpStatusCode status,
-            org.springframework.web.context.request.WebRequest request) {
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
+                                                                  @NonNull HttpHeaders headers,
+                                                                  @NonNull HttpStatusCode status,
+                                                                  @NonNull WebRequest request) {
 
         String errors = ex.getBindingResult().getFieldErrors().stream()
                           .map(err -> err.getField() + ": " + err.getDefaultMessage())
@@ -39,7 +45,53 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(BAD_REQUEST, errors);
         problemDetail.setTitle("Validation Failed");
         problemDetail.setProperty("timestamp", Instant.now());
-        return org.springframework.http.ResponseEntity.badRequest().body(problemDetail);
+        return ResponseEntity.badRequest().body(problemDetail);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleMissingServletRequestParameter(@NonNull MissingServletRequestParameterException ex,
+                                                                          @NonNull HttpHeaders headers,
+                                                                          @NonNull HttpStatusCode status,
+                                                                          @NonNull WebRequest request) {
+        log.warn("Missing required request parameter (400 Bad Request): {}", ex.getMessage());
+        return ResponseEntity.badRequest()
+                             .body(problemDetail(BAD_REQUEST, "Missing Parameter", ex.getMessage()));
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleTypeMismatch(@NonNull TypeMismatchException ex,
+                                                        @NonNull HttpHeaders headers,
+                                                        @NonNull HttpStatusCode status,
+                                                        @NonNull WebRequest request) {
+        log.warn("Request parameter type mismatch (400 Bad Request): {}", ex.getMessage());
+        String paramName = ex instanceof org.springframework.web.method.annotation.MethodArgumentTypeMismatchException mismatch
+                ? mismatch.getName() : "unknown";
+        return ResponseEntity.badRequest()
+                             .body(problemDetail(BAD_REQUEST, "Invalid Parameter",
+                                                 "Invalid value for parameter '" + paramName + "'"));
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleHttpMessageNotReadable(@NonNull HttpMessageNotReadableException ex,
+                                                                  @NonNull HttpHeaders headers,
+                                                                  @NonNull HttpStatusCode status,
+                                                                  @NonNull WebRequest request) {
+        log.warn("Malformed request body (400 Bad Request): {}", ex.getMessage());
+        return ResponseEntity.badRequest()
+                             .body(problemDetail(BAD_REQUEST, "Malformed Request",
+                                                 "Request body is missing or not valid JSON"));
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleHttpMediaTypeNotSupported(@NonNull HttpMediaTypeNotSupportedException ex,
+                                                                     @NonNull HttpHeaders headers,
+                                                                     @NonNull HttpStatusCode status,
+                                                                     @NonNull WebRequest request) {
+        log.warn("Unsupported media type (415 Unsupported Media Type): {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+                             .body(problemDetail(HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+                                                 "Unsupported Media Type",
+                                                 ex.getMessage()));
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
@@ -92,6 +144,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         log.error("Data integrity violation encountered (409 Conflict): {}", ex.getMessage(), ex);
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(CONFLICT, REQUEST_CONFLICTS_WITH_EXISTING_DATA);
         problemDetail.setTitle("Data Integrity Violation");
+        problemDetail.setProperty("timestamp", Instant.now());
+        return problemDetail;
+    }
+
+    private ProblemDetail problemDetail(HttpStatusCode status, String title, String detail) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(status, detail);
+        problemDetail.setTitle(title);
         problemDetail.setProperty("timestamp", Instant.now());
         return problemDetail;
     }

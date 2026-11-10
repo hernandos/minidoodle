@@ -11,7 +11,6 @@ import de.com.saenz.minidoodle.infrastructure.api.model.MeetingResponse;
 import de.com.saenz.minidoodle.infrastructure.api.model.ScheduleMeetingRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -81,33 +80,31 @@ public class MeetingController {
                               .orElseThrow(() -> new ResourceNotFoundException("Meeting not found with id: " + id));
     }
 
-    @Operation(summary = "Get meetings organized by a user",
-               description = "Retrieves all meetings organized by the given user ID.")
+    @Operation(summary = "List meetings",
+               description = "Retrieves meetings with optional filters. Filter by 'organizerId' to get meetings organized by a user, by 'participantId' to get meetings where a user participates, or combine both to get meetings organized by one user in which another participates. Omit both to list all meetings.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Meetings retrieved successfully",
-                         content = @Content(array = @ArraySchema(schema = @Schema(implementation = MeetingResponse.class))))
+                         content = @Content(schema = @Schema(implementation = MeetingResponse.class)))
     })
-    @GetMapping(params = "organizerId")
+    @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public List<MeetingResponse> getMeetingsByOrganizer(
-            @Parameter(description = "User ID of the organizer", example = "1")
-            @RequestParam Long organizerId) {
-        List<Meeting> meetings = getMeetingQuery.getMeetingsByOrganizer(organizerId);
-        return apiDtoMapper.toMeetingResponseList(meetings);
-    }
+    public List<MeetingResponse> getMeetings(
+            @Parameter(description = "Filter by organizer user ID", example = "1")
+            @RequestParam(required = false) Long organizerId,
+            @Parameter(description = "Filter by participant user ID", example = "2")
+            @RequestParam(required = false) Long participantId) {
 
-    @Operation(summary = "Get meetings where a user is a participant",
-               description = "Retrieves all meetings where the user participates (excluding organized meetings).")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Meetings retrieved successfully",
-                         content = @Content(array = @ArraySchema(schema = @Schema(implementation = MeetingResponse.class))))
-    })
-    @GetMapping(params = "participantId")
-    @ResponseStatus(HttpStatus.OK)
-    public List<MeetingResponse> getMeetingsByParticipant(
-            @Parameter(description = "User ID of the participant", example = "2")
-            @RequestParam Long participantId) {
-        List<Meeting> meetings = getMeetingQuery.getMeetingsByParticipant(participantId);
+        List<Meeting> meetings;
+        if (organizerId != null && participantId != null) {
+            meetings = getMeetingQuery.getMeetingsByOrganizerAndParticipant(organizerId, participantId);
+        } else if (organizerId != null) {
+            meetings = getMeetingQuery.getMeetingsByOrganizer(organizerId);
+        } else if (participantId != null) {
+            meetings = getMeetingQuery.getMeetingsByParticipant(participantId);
+        } else {
+            meetings = getMeetingQuery.getAllMeetings();
+        }
+
         return apiDtoMapper.toMeetingResponseList(meetings);
     }
 

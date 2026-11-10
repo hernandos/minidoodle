@@ -64,8 +64,7 @@ public class TimeSlotRepositoryAdapter implements TimeSlotRepository {
     @Override
     public List<TimeSlot> findByTimeRange(Instant startTime, Instant endTime) {
         return timeSlotEntityMapper.toDomainList(
-                springDataTimeSlotRepository.findByStartTimeLessThanAndEndTimeGreaterThan(endTime, startTime)
-        );
+                springDataTimeSlotRepository.findByStartTimeLessThanAndEndTimeGreaterThan(endTime, startTime));
     }
 
     @Override
@@ -73,8 +72,7 @@ public class TimeSlotRepositoryAdapter implements TimeSlotRepository {
         return timeSlotEntityMapper.toDomainList(
                 springDataTimeSlotRepository.findByStartTimeLessThanAndEndTimeGreaterThanAndStatus(endTime,
                                                                                                    startTime,
-                                                                                                   status)
-        );
+                                                                                                   status));
     }
 
     @Override
@@ -85,8 +83,7 @@ public class TimeSlotRepositoryAdapter implements TimeSlotRepository {
         return timeSlotEntityMapper.toDomainList(
                 springDataTimeSlotRepository.findByUserIdInAndStartTimeLessThanAndEndTimeGreaterThan(userIds,
                                                                                                      endTime,
-                                                                                                     startTime)
-        );
+                                                                                                     startTime));
     }
 
     @Override
@@ -101,8 +98,7 @@ public class TimeSlotRepositoryAdapter implements TimeSlotRepository {
                 springDataTimeSlotRepository.findByUserIdInAndStartTimeLessThanAndEndTimeGreaterThanAndStatus(userIds,
                                                                                                               endTime,
                                                                                                               startTime,
-                                                                                                              status)
-        );
+                                                                                                              status));
     }
 
     @Override

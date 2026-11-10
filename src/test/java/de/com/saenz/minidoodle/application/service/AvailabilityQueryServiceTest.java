@@ -27,18 +27,14 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class AvailabilityQueryServiceTest {
 
-    @Mock
-    private TimeSlotRepository timeSlotRepository;
-
-    @Mock
-    private CalendarRepository calendarRepository;
-
-    private SimpleMeterRegistry meterRegistry;
-
-    private AvailabilityQueryService availabilityQueryService;
-
     private final Instant start = Instant.parse("2026-11-10T09:00:00Z");
     private final Instant end = start.plus(Duration.ofHours(3));
+    @Mock
+    private TimeSlotRepository timeSlotRepository;
+    @Mock
+    private CalendarRepository calendarRepository;
+    private SimpleMeterRegistry meterRegistry;
+    private AvailabilityQueryService availabilityQueryService;
 
     @BeforeEach
     void setUp() {
@@ -92,7 +88,8 @@ class AvailabilityQueryServiceTest {
                               .status(SlotStatus.FREE)
                               .build();
 
-        when(timeSlotRepository.findByTimeRangeAndStatus(start, end, SlotStatus.FREE)).thenReturn(List.of(s1));
+        when(timeSlotRepository.findByTimeRangeAndStatus(start, end, SlotStatus.FREE))
+                .thenReturn(List.of(s1));
 
         List<TimeSlot> result = availabilityQueryService.getAggregatedFreeAvailability(start, end);
 

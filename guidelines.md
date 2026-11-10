@@ -22,8 +22,9 @@
   type conversions (enums, value objects) go in `default` methods inside the mapper — never in controllers or services.
 - Place **input validation on request DTOs** using Jakarta constraints and custom `@Constraint`/`ConstraintValidator`
   pairs; enforce with `@Valid @RequestBody`.
-- Document every REST endpoint with **OpenAPI annotations** (`@Tag`, `@Operation`, `@ApiResponses`, `@Parameter`) —
-  treat them as mandatory, not optional. Error responses use `ProblemDetail` as the schema.
+  - Document every REST endpoint with **OpenAPI annotations** (`@Tag`, `@Operation`, `@ApiResponses`, `@Parameter`) —
+    treat them as mandatory, not optional. Error responses use `ProblemDetail` as the schema. Controllers shouldn't use 
+    ResponseEntity if it is not needed. A normal DTO should be used to simplify the testability.  
 
 ## 3. Application Layer — Use Cases & Queries (CQRS-lite)
 

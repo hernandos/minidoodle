@@ -54,23 +54,20 @@ public class Meeting {
     }
 
     public Instant getStartTime() {
-        if (timeSlots == null || timeSlots.isEmpty()) {
+        if (timeSlots.isEmpty()) {
             return null;
         }
         return timeSlots.getFirst().getStartTime();
     }
 
     public Instant getEndTime() {
-        if (timeSlots == null || timeSlots.isEmpty()) {
+        if (timeSlots.isEmpty()) {
             return null;
         }
         return timeSlots.getFirst().getEndTime();
     }
 
     public List<User> getParticipants() {
-        if (timeSlots == null) {
-            return Collections.emptyList();
-        }
         return timeSlots.stream()
                         .map(TimeSlot::getUser)
                         .filter(u -> u != null && (organizer == null || !u.getId().equals(organizer.getId())))
@@ -92,14 +89,19 @@ public class Meeting {
             }
         }
         if (timeSlots.stream().anyMatch(existing ->
-                (slot.getId() != null && java.util.Objects.equals(existing.getId(), slot.getId())) || existing.equals(slot))) {
+                                                (slot.getId() != null && java.util.Objects.equals(existing.getId(),
+                                                                                                  slot.getId())) || existing.equals(
+                                                        slot))) {
             throw new IllegalArgumentException("Slot is already added to this meeting");
         }
         if (slot.getUser() != null && slot.getUser().getId() != null) {
             boolean userAlreadyPresent = timeSlots.stream()
-                    .anyMatch(existing -> existing.getUser() != null && java.util.Objects.equals(existing.getUser().getId(), slot.getUser().getId()));
+                                                  .anyMatch(existing -> existing.getUser() != null && java.util.Objects.equals(
+                                                          existing.getUser().getId(),
+                                                          slot.getUser().getId()));
             if (userAlreadyPresent) {
-                throw new IllegalArgumentException("A slot for user " + slot.getUser().getId() + " is already present in this meeting");
+                throw new IllegalArgumentException("A slot for user " + slot.getUser()
+                                                                            .getId() + " is already present in this meeting");
             }
         }
         timeSlots.add(slot);

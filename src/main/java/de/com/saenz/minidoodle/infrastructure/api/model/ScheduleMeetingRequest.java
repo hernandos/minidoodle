@@ -1,5 +1,7 @@
 package de.com.saenz.minidoodle.infrastructure.api.model;
 
+import de.com.saenz.minidoodle.infrastructure.api.validation.Timeframed;
+import de.com.saenz.minidoodle.infrastructure.api.validation.ValidTimeframe;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -8,6 +10,7 @@ import jakarta.validation.constraints.Size;
 import java.time.Instant;
 import java.util.List;
 
+@ValidTimeframe
 @Schema(description = "Request payload to schedule a meeting with participants")
 public record ScheduleMeetingRequest(
         @NotBlank(message = "Title must not be blank")
@@ -35,5 +38,5 @@ public record ScheduleMeetingRequest(
         @NotNull(message = "End time must not be null")
         @Schema(description = "Meeting end timestamp in ISO-8601 UTC format", example = "2026-11-15T15:00:00Z")
         Instant endTime
-) {
+) implements Timeframed {
 }

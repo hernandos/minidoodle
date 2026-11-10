@@ -12,7 +12,11 @@ public interface GetMeetingQuery {
 
     Optional<Meeting> getMeetingById(Long id);
 
+    List<Meeting> getAllMeetings();
+
     List<Meeting> getMeetingsByOrganizer(Long organizerId);
 
     List<Meeting> getMeetingsByParticipant(Long userId);
+
+    List<Meeting> getMeetingsByOrganizerAndParticipant(Long organizerId, Long participantId);
 }

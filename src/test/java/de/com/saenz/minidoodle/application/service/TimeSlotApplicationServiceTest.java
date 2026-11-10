@@ -1,5 +1,6 @@
 package de.com.saenz.minidoodle.application.service;
 
+import de.com.saenz.minidoodle.domain.exception.ResourceNotFoundException;
 import de.com.saenz.minidoodle.domain.model.SlotStatus;
 import de.com.saenz.minidoodle.domain.model.TimeSlot;
 import de.com.saenz.minidoodle.domain.model.User;
@@ -25,17 +26,14 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class TimeSlotApplicationServiceTest {
 
-    @Mock
-    private TimeSlotRepository timeSlotRepository;
-
-    @Mock
-    private UserRepository userRepository;
-
-    @InjectMocks
-    private TimeSlotApplicationService timeSlotApplicationService;
-
     private final Instant start = Instant.parse("2026-11-10T10:00:00Z");
     private final Instant end = start.plus(Duration.ofHours(1));
+    @Mock
+    private TimeSlotRepository timeSlotRepository;
+    @Mock
+    private UserRepository userRepository;
+    @InjectMocks
+    private TimeSlotApplicationService timeSlotApplicationService;
 
     @Test
     @DisplayName("createTimeSlot should persist and return new free slot when valid")
@@ -56,12 +54,12 @@ class TimeSlotApplicationServiceTest {
     }
 
     @Test
-    @DisplayName("createTimeSlot should throw IllegalArgumentException when user does not exist")
-    void createTimeSlot_shouldThrowIllegalArgumentException_whenUserNotFound() {
+    @DisplayName("createTimeSlot should throw ResourceNotFoundException when user does not exist")
+    void createTimeSlot_shouldThrowResourceNotFoundException_whenUserNotFound() {
         when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> timeSlotApplicationService.createTimeSlot(99L, start, end))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("User not found with id: 99");
     }
 
@@ -74,8 +72,8 @@ class TimeSlotApplicationServiceTest {
     }
 
     @Test
-    @DisplayName("createTimeSlot should throw IllegalArgumentException when overlapping slot exists for user")
-    void createTimeSlot_shouldThrowIllegalArgumentException_whenOverlappingSlotExists() {
+    @DisplayName("createTimeSlot should throw IllegalStateException when overlapping slot exists for user")
+    void createTimeSlot_shouldThrowIllegalStateException_whenOverlappingSlotExists() {
         User user = User.builder().id(1L).username("alice").build();
         TimeSlot existing = TimeSlot.builder().id(10L).user(user).startTime(start).endTime(end).build();
 
@@ -83,7 +81,7 @@ class TimeSlotApplicationServiceTest {
         when(timeSlotRepository.findByUserIdAndTimeRange(1L, start, end)).thenReturn(List.of(existing));
 
         assertThatThrownBy(() -> timeSlotApplicationService.createTimeSlot(1L, start, end))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("overlaps with existing slot");
 
         verify(timeSlotRepository, never()).save(any());
@@ -139,8 +137,8 @@ class TimeSlotApplicationServiceTest {
     }
 
     @Test
-    @DisplayName("updateTimeSlot should throw IllegalArgumentException when new timeframe overlaps another slot")
-    void updateTimeSlot_shouldThrowIllegalArgumentException_whenNewTimeframeOverlaps() {
+    @DisplayName("updateTimeSlot should throw IllegalStateException when new timeframe overlaps another slot")
+    void updateTimeSlot_shouldThrowIllegalStateException_whenNewTimeframeOverlaps() {
         User user = User.builder().id(1L).username("alice").build();
         TimeSlot slotToUpdate = TimeSlot.builder()
                                         .id(5L)
@@ -164,7 +162,7 @@ class TimeSlotApplicationServiceTest {
                                                                                                 otherSlot));
 
         assertThatThrownBy(() -> timeSlotApplicationService.updateTimeSlot(5L, start, newEnd))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("overlaps with an existing slot");
 
         verify(timeSlotRepository, never()).save(any());
