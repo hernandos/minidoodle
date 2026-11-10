@@ -27,7 +27,7 @@ Accept: application/json
 
 ### 3.3 Get User Availability - Error: User Not Found (404 Not Found)
 GET http://{{host}}/api/v1/availability/users/999999
-Accept: application/problem+json
+Accept: application/json
 
 > {%
     client.test("Status code is 404 Not Found", function() {
@@ -58,7 +58,7 @@ Accept: application/json
 ### 3.6 Get Aggregated Availability - Error: Missing Required Query Parameter (400 Bad Request)
 # startTime and endTime are required for aggregated calculations
 GET http://{{host}}/api/v1/availability/aggregate
-Accept: application/problem+json
+Accept: application/json
 
 > {%
     client.test("Status code is 400 Bad Request", function() {

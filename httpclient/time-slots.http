@@ -44,7 +44,7 @@ Accept: application/json
 ### 1.3 Create TimeSlot - Error: Invalid timeframe start >= end (400 Bad Request)
 POST http://{{host}}/api/v1/time-slots
 Content-Type: application/json
-Accept: application/problem+json
+Accept: application/json
 
 {
   "userId": 1,
@@ -64,7 +64,7 @@ Accept: application/problem+json
 ### 1.4 Create TimeSlot - Error: Missing required fields (400 Bad Request)
 POST http://{{host}}/api/v1/time-slots
 Content-Type: application/json
-Accept: application/problem+json
+Accept: application/json
 
 {
   "userId": null,
