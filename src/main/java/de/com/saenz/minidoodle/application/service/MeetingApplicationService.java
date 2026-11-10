@@ -75,7 +75,7 @@ public class MeetingApplicationService implements ScheduleMeetingUseCase, Cancel
 
     @Override
     public Meeting scheduleMeeting(ScheduleMeetingCommand command) {
-        validateCommand(command);
+        validateMeetingCommand(command);
 
         log.info("Attempting to schedule meeting '{}' for organizer {} with {} participants",
                  command.title(), command.organizerId(), command.participantIds().size());
@@ -168,7 +168,7 @@ public class MeetingApplicationService implements ScheduleMeetingUseCase, Cancel
         log.info("Cancelled meeting id: {} and reverted {} slots to FREE", meetingId, meeting.getTimeSlots().size());
     }
 
-    private void validateCommand(ScheduleMeetingCommand command) {
+    private void validateMeetingCommand(ScheduleMeetingCommand command) {
         if (command == null) {
             log.warn("Command validation failed: command is null");
             throw new IllegalArgumentException("ScheduleMeetingCommand must not be null");

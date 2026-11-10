@@ -143,7 +143,6 @@ class MeetingTest {
         meeting.addConsumedSlot(slotCharlie);
 
         List<User> participants = meeting.getParticipants();
-        assertThat(participants).containsExactlyInAnyOrder(participant1, participant2);
-        assertThat(participants).doesNotContain(organizer);
+        assertThat(participants).containsExactlyInAnyOrder(participant1, participant2).doesNotContain(organizer);
     }
 }
