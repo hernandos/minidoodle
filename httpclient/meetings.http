@@ -1,0 +1,130 @@
+### =========================================================================
+### MEETINGS (Lifecycle: Schedule, Query with Filters, Cancellation)
+### =========================================================================
+
+### 2.1 Schedule Meeting between Alice (1) and Bob (2) - Success (201 Created)
+POST http://{{host}}/api/v1/meetings
+Content-Type: application/json
+Accept: application/json
+
+{
+  "title": "Architecture & Sprint Sync",
+  "description": "Align on database schema and REST controllers",
+  "organizerId": 1,
+  "participantIds": [2],
+  "startTime": "2026-11-15T09:00:00Z",
+  "endTime": "2026-11-15T10:00:00Z"
+}
+
+> {%
+    client.test("Status code is 201 Created", function() {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+    client.test("Meeting has consumed time slots", function() {
+        client.assert(response.body.timeSlots.length >= 2, "Meeting must contain consumed slots");
+    });
+    client.global.set("meetingId", response.body.id);
+%}
+
+### 2.2 Schedule Meeting - Error: Blank title (400 Bad Request)
+POST http://{{host}}/api/v1/meetings
+Content-Type: application/json
+Accept: application/json
+
+{
+  "title": "   ",
+  "description": "Blank title test",
+  "organizerId": 1,
+  "participantIds": [2],
+  "startTime": "2026-11-15T09:00:00Z",
+  "endTime": "2026-11-15T10:00:00Z"
+}
+
+> {%
+    client.test("Status code is 400 Bad Request", function() {
+        client.assert(response.status === 400, "Expected 400 but got " + response.status);
+    });
+    client.test("Title indicates Validation Failed", function() {
+        client.assert(response.body.title === "Validation Failed");
+    });
+%}
+
+### 2.3 Get Meeting By ID - Success (200 OK)
+GET http://{{host}}/api/v1/meetings/{{meetingId}}
+Accept: application/json
+
+> {%
+    client.test("Status code is 200 OK", function() {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+    client.test("Organizer ID matches", function() {
+        client.assert(response.body.organizer.id === 1);
+    });
+%}
+
+### 2.4 Get Meeting By ID - Error: Not Found (404 Not Found)
+GET http://{{host}}/api/v1/meetings/999999
+Accept: application/json
+
+> {%
+    client.test("Status code is 404 Not Found", function() {
+        client.assert(response.status === 404, "Expected 404 but got " + response.status);
+    });
+    client.test("Title indicates Resource Not Found", function() {
+        client.assert(response.body.title === "Resource Not Found");
+    });
+%}
+
+### 2.5 Query Meetings - Filter by Organizer (200 OK)
+GET http://{{host}}/api/v1/meetings?organizerId=1
+Accept: application/json
+
+> {%
+    client.test("Status code is 200 OK", function() {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+%}
+
+### 2.6 Query Meetings - Filter by Participant (200 OK)
+GET http://{{host}}/api/v1/meetings?participantId=2
+Accept: application/json
+
+> {%
+    client.test("Status code is 200 OK", function() {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+%}
+
+### 2.7 Query Meetings - Combined Filter: Organizer AND Participant (200 OK)
+GET http://{{host}}/api/v1/meetings?organizerId=1&participantId=2
+Accept: application/json
+
+> {%
+    client.test("Status code is 200 OK", function() {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+%}
+
+### 2.8 Query Meetings - Error: Missing Mandatory Filter Rule (400 Bad Request)
+# Calling without organizerId or participantId must be rejected
+GET http://{{host}}/api/v1/meetings
+Accept: application/json
+
+> {%
+    client.test("Status code is 400 Bad Request", function() {
+        client.assert(response.status === 400, "Expected 400 when both filters are missing");
+    });
+    client.test("Problem detail message", function() {
+        client.assert(response.body.detail.includes("At least one filter parameter"));
+    });
+%}
+
+### 2.9 Cancel Meeting - Success (204 No Content)
+# Cancels the meeting and releases its consumed slots back to FREE status
+DELETE http://{{host}}/api/v1/meetings/{{meetingId}}
+
+> {%
+    client.test("Status code is 204 No Content", function() {
+        client.assert(response.status === 204, "Expected 204 but got " + response.status);
+    });
+%}
