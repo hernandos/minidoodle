@@ -58,9 +58,7 @@ public class MeetingApplicationService implements ScheduleMeetingUseCase, Cancel
 
         validateAllUserExists(allUserIds);
 
-        Instant start = command.startTime();
-        Instant end = command.endTime();
-        List<TimeSlot> slotsToConsume = validateAndMarkSlotsAsBusy(allUserIds, start, end);
+        List<TimeSlot> slotsToConsume = validateAndMarkSlotsAsBusy(allUserIds, command.startTime(), command.endTime());
 
         // Persist slot state transitions (optimistic locking @Version protects against concurrent booking)
         log.debug("Persisting {} transitioned BUSY slots with optimistic locking check", slotsToConsume.size());
