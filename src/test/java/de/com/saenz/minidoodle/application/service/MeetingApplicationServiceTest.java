@@ -97,7 +97,7 @@ class MeetingApplicationServiceTest {
                                     .build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(organizer));
-        when(userRepository.existsById(2L)).thenReturn(true);
+        when(userRepository.findMissingIds(anyCollection())).thenReturn(List.of());
         when(timeSlotRepository.findByUserIdAndStartTimeAndEndTime(1L, start, end)).thenReturn(Optional.of(orgSlot));
         when(timeSlotRepository.findByUserIdAndStartTimeAndEndTime(2L, start, end)).thenReturn(Optional.of(partSlot));
         when(timeSlotRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
@@ -143,7 +143,7 @@ class MeetingApplicationServiceTest {
                                    .build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(organizer));
-        when(userRepository.existsById(2L)).thenReturn(true);
+        when(userRepository.findMissingIds(anyCollection())).thenReturn(List.of());
         when(timeSlotRepository.findByUserIdAndStartTimeAndEndTime(1L, start, end)).thenReturn(Optional.of(orgSlot));
         when(timeSlotRepository.findByUserIdAndStartTimeAndEndTime(2L, start, end)).thenReturn(Optional.empty());
 
@@ -183,7 +183,7 @@ class MeetingApplicationServiceTest {
                                     .build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(organizer));
-        when(userRepository.existsById(2L)).thenReturn(true);
+        when(userRepository.findMissingIds(anyCollection())).thenReturn(List.of());
         when(timeSlotRepository.findByUserIdAndStartTimeAndEndTime(1L, start, end)).thenReturn(Optional.of(orgSlot));
         when(timeSlotRepository.findByUserIdAndStartTimeAndEndTime(2L, start, end)).thenReturn(Optional.of(partSlot));
 
@@ -212,11 +212,11 @@ class MeetingApplicationServiceTest {
     void scheduleMeeting_shouldThrowIllegalArgumentException_whenParticipantNotFound() {
         ScheduleMeetingCommand command = new ScheduleMeetingCommand("Sync", null, 1L, List.of(99L), start, end);
         when(userRepository.findById(1L)).thenReturn(Optional.of(organizer));
-        when(userRepository.existsById(99L)).thenReturn(false);
+        when(userRepository.findMissingIds(anyCollection())).thenReturn(List.of(99L));
 
         assertThatThrownBy(() -> meetingApplicationService.scheduleMeeting(command))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Participant not found with id: 99");
+                .hasMessageContaining("Users not found with ids: [99]");
     }
 
     @Test

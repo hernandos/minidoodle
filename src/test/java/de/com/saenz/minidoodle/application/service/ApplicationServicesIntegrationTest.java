@@ -55,6 +55,16 @@ class ApplicationServicesIntegrationTest {
     @Autowired
     private MeetingRepository meetingRepository;
 
+    @Test
+    @DisplayName("should return only user IDs that do not exist")
+    void findMissingIds_shouldReturnUnknownIds() {
+        User user = createUniqueUser("missing_ids");
+        Long missingId = Long.MAX_VALUE;
+
+        assertThat(userRepository.findMissingIds(List.of(user.getId(), missingId)))
+                .containsExactly(missingId);
+    }
+
     private User createUniqueUser(String prefix) {
         String uid = UUID.randomUUID().toString().substring(0, 8);
         return userRepository.save(User.builder()

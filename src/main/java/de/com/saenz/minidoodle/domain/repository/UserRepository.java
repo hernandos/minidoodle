@@ -2,6 +2,7 @@ package de.com.saenz.minidoodle.domain.repository;
 
 import de.com.saenz.minidoodle.domain.model.User;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,6 +23,8 @@ public interface UserRepository {
     List<User> findAll();
 
     boolean existsById(Long id);
+
+    List<Long> findMissingIds(Collection<Long> ids);
 
     void deleteById(Long id);
 }

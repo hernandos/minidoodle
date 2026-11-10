@@ -8,8 +8,10 @@ import de.com.saenz.minidoodle.infrastructure.persistence.jpa.repository.SpringD
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Persistence adapter connecting domain UserRepository to Spring Data JPA.
@@ -53,6 +55,19 @@ public class UserRepositoryAdapter implements UserRepository {
     @Override
     public boolean existsById(Long id) {
         return springDataUserRepository.existsById(id);
+    }
+
+    @Override
+    public List<Long> findMissingIds(Collection<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+
+        Set<Long> existingIds = Set.copyOf(springDataUserRepository.findIdsByIdIn(ids));
+        return ids.stream()
+                  .filter(id -> !existingIds.contains(id))
+                  .distinct()
+                  .toList();
     }
 
     @Override

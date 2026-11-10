@@ -54,13 +54,7 @@ public class MeetingApplicationService implements ScheduleMeetingUseCase, Cancel
 
         log.debug("Verifying availability of {} total users: {}", allUserIds.size(), allUserIds);
 
-        // Validate that all participant users exist
-        for (Long participantId : command.participantIds()) {
-            if (!participantId.equals(command.organizerId()) && !userRepository.existsById(participantId)) {
-                log.warn("Meeting schedule failed: Participant user not found with id {}", participantId);
-                throw new IllegalArgumentException("Participant not found with id: " + participantId);
-            }
-        }
+        validateAllUserExists(allUserIds);
 
         // Collect and validate matching FREE slots for organizer and all participants
         List<TimeSlot> slotsToConsume = new ArrayList<>();
@@ -108,6 +102,14 @@ public class MeetingApplicationService implements ScheduleMeetingUseCase, Cancel
         meterRegistry.ifPresent(registry -> registry.counter("meetings.scheduled.total").increment());
 
         return savedMeeting;
+    }
+
+    private void validateAllUserExists(Collection<Long> userIds) {
+        List<Long> missingIds = userRepository.findMissingIds(userIds);
+        if (!missingIds.isEmpty()) {
+            log.warn("Meeting schedule failed: Users not found with ids {}", missingIds);
+            throw new IllegalArgumentException("Users not found with ids: " + missingIds);
+        }
     }
 
     @Override
