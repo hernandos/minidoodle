@@ -1,0 +1,62 @@
+### =========================================================================
+### USERS (Registration & Management)
+### =========================================================================
+
+### 0.1 Register a new User - Success (201 Created)
+POST http://{{host}}/api/v1/users
+Content-Type: application/json
+Accept: application/json
+
+{
+  "username": "charlie",
+  "name": "Charlie Brown",
+  "email": "charlie@example.com"
+}
+
+> {%
+    client.test("Status code is 201 Created", function() {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+    client.test("User has generated ID and matching username", function() {
+        client.assert(response.body.id !== null, "ID must be present");
+        client.assert(response.body.username === "charlie", "Username must match");
+    });
+    client.global.set("userId", response.body.id);
+%}
+
+### 0.2 Register User - Error: Invalid Email and Short Username (400 Bad Request)
+POST http://{{host}}/api/v1/users
+Content-Type: application/json
+Accept: application/json
+
+{
+  "username": "al",
+  "name": "d",
+  "email": "not-an-email"
+}
+
+> {%
+    client.test("Status code is 400 Bad Request", function() {
+        client.assert(response.status === 400, "Expected 400 for invalid user fields");
+    });
+    client.test("Problem title is Validation Failed", function() {
+        client.assert(response.body.title === "Validation Failed");
+    });
+%}
+
+### 0.3 Register User - Error: Duplicate Username or Email (409 Conflict)
+POST http://{{host}}/api/v1/users
+Content-Type: application/json
+Accept: application/json
+
+{
+  "username": "charlie",
+  "name": "Another Charlie",
+  "email": "charlie@example.com"
+}
+
+> {%
+    client.test("Status code is 409 Conflict", function() {
+        client.assert(response.status === 409, "Expected 409 for duplicate user");
+    });
+%}

@@ -1,0 +1,67 @@
+### =========================================================================
+### AVAILABILITY (Personal Calendar View & Multi-User Aggregated View)
+### =========================================================================
+
+### 3.1 Get User Availability / Calendar View - Success (200 OK)
+GET http://{{host}}/api/v1/availability/users/1
+Accept: application/json
+
+> {%
+    client.test("Status code is 200 OK", function() {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+    client.test("User object present", function() {
+        client.assert(response.body.user.id === 1);
+    });
+%}
+
+### 3.2 Get User Availability with Time Range Filter - Success (200 OK)
+GET http://{{host}}/api/v1/availability/users/1?startTime=2026-11-15T00:00:00Z&endTime=2026-11-15T23:59:59Z
+Accept: application/json
+
+> {%
+    client.test("Status code is 200 OK", function() {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+%}
+
+### 3.3 Get User Availability - Error: User Not Found (404 Not Found)
+GET http://{{host}}/api/v1/availability/users/999999
+Accept: application/json
+
+> {%
+    client.test("Status code is 404 Not Found", function() {
+        client.assert(response.status === 404, "Expected 404 but got " + response.status);
+    });
+%}
+
+### 3.4 Get Aggregated Availability Across All Users - Success (200 OK)
+GET http://{{host}}/api/v1/availability/aggregate?startTime=2026-11-15T00:00:00Z&endTime=2026-11-15T23:59:59Z
+Accept: application/json
+
+> {%
+    client.test("Status code is 200 OK", function() {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+%}
+
+### 3.5 Get Aggregated Availability Filtered by Specific Users & freeOnly=true - Success (200 OK)
+GET http://{{host}}/api/v1/availability/aggregate?startTime=2026-11-15T00:00:00Z&endTime=2026-11-15T23:59:59Z&userIds=1,2&freeOnly=true
+Accept: application/json
+
+> {%
+    client.test("Status code is 200 OK", function() {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+%}
+
+### 3.6 Get Aggregated Availability - Error: Missing Required Query Parameter (400 Bad Request)
+# startTime and endTime are required for aggregated calculations
+GET http://{{host}}/api/v1/availability/aggregate
+Accept: application/json
+
+> {%
+    client.test("Status code is 400 Bad Request", function() {
+        client.assert(response.status === 400, "Expected 400 when missing timeframe parameters");
+    });
+%}
