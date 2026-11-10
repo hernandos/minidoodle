@@ -38,6 +38,8 @@ public interface TimeSlotRepository {
 
     Optional<TimeSlot> findByUserIdAndStartTimeAndEndTime(Long userId, Instant startTime, Instant endTime);
 
+    List<TimeSlot> findByUserIdsAndStartTimeAndEndTime(List<Long> userIds, Instant startTime, Instant endTime);
+
     void deleteById(Long id);
 
     boolean existsById(Long id);

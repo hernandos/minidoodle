@@ -111,6 +111,18 @@ public class TimeSlotRepositoryAdapter implements TimeSlotRepository {
                                            .map(timeSlotEntityMapper::toDomain);
     }
 
+    @Override
+    public List<TimeSlot> findByUserIdsAndStartTimeAndEndTime(List<Long> userIds,
+                                                              Instant startTime,
+                                                              Instant endTime) {
+        if (userIds == null || userIds.isEmpty()) {
+            return List.of();
+        }
+        return timeSlotEntityMapper.toDomainList(
+                springDataTimeSlotRepository.findByUserIdInAndStartTimeAndEndTime(userIds, startTime, endTime)
+        );
+    }
+
 
     @Override
     public void deleteById(Long id) {

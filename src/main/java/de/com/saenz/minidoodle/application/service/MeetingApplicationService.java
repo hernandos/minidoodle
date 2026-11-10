@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Application service orchestrating meeting scheduling and cancellation.
@@ -44,7 +45,8 @@ public class MeetingApplicationService implements ScheduleMeetingUseCase, Cancel
 
         User organizer = userRepository.findById(command.organizerId())
                                        .orElseThrow(() -> {
-                                           log.warn("Meeting schedule failed: Organizer not found with id {}", command.organizerId());
+                                           log.warn("Meeting schedule failed: Organizer not found with id {}",
+                                                    command.organizerId());
                                            return new IllegalArgumentException("Organizer not found with id: " + command.organizerId());
                                        });
 
@@ -56,33 +58,9 @@ public class MeetingApplicationService implements ScheduleMeetingUseCase, Cancel
 
         validateAllUserExists(allUserIds);
 
-        // Collect and validate matching FREE slots for organizer and all participants
-        List<TimeSlot> slotsToConsume = new ArrayList<>();
         Instant start = command.startTime();
         Instant end = command.endTime();
-
-        for (Long userId : allUserIds) {
-            TimeSlot slot = timeSlotRepository.findByUserIdAndStartTimeAndEndTime(userId, start, end)
-                                              .orElseThrow(() -> {
-                                                  log.warn("Meeting schedule failed: User {} has no matching slot for [{} - {}]", userId, start, end);
-                                                  return new IllegalStateException(
-                                                          String.format("User %d is not available: no matching slot found for timeframe [%s - %s]",
-                                                                        userId, start, end)
-                                                  );
-                                              });
-
-            if (!slot.isFree()) {
-                log.warn("Meeting schedule failed: Slot for user {} is already busy in [{} - {}]", userId, start, end);
-                throw new IllegalStateException(
-                        String.format("User %d is not available: slot for timeframe [%s - %s] is already busy",
-                                      userId, start, end)
-                );
-            }
-
-            log.debug("Found matching FREE slot id: {} for user: {} in [{} - {}]", slot.getId(), userId, start, end);
-            slot.markAsBusy();
-            slotsToConsume.add(slot);
-        }
+        List<TimeSlot> slotsToConsume = validateAndMarkSlotsAsBusy(allUserIds, start, end);
 
         // Persist slot state transitions (optimistic locking @Version protects against concurrent booking)
         log.debug("Persisting {} transitioned BUSY slots with optimistic locking check", slotsToConsume.size());
@@ -104,6 +82,55 @@ public class MeetingApplicationService implements ScheduleMeetingUseCase, Cancel
         return savedMeeting;
     }
 
+    private List<TimeSlot> validateAndMarkSlotsAsBusy(Set<Long> allUserIds, Instant start, Instant end) {
+        List<TimeSlot> slots = timeSlotRepository.findByUserIdsAndStartTimeAndEndTime(List.copyOf(allUserIds),
+                                                                                      start,
+                                                                                      end);
+
+        validateUsersHaveMatchingSlots(allUserIds, start, end, slots);
+        validateSlotsAreFree(start, end, slots);
+
+        slots.forEach(slot -> {
+            log.trace("Found matching FREE slot id: {} for user: {} in [{} - {}]",
+                      slot.getId(), slot.getUser().getId(), start, end);
+            slot.markAsBusy();
+        });
+        return slots;
+    }
+
+    private static void validateSlotsAreFree(Instant start, Instant end, List<TimeSlot> slots) {
+        List<TimeSlot> busySlots = slots.stream()
+                                        .filter(slot -> !slot.isFree())
+                                        .toList();
+        if (!busySlots.isEmpty()) {
+            log.warn("Meeting schedule failed: Slots already busy for users {} in [{} - {}]",
+                     busySlots.stream().map(slot -> slot.getUser().getId()).toList(), start, end);
+            throw new IllegalStateException(
+                    String.format("Users %s are not available: slots for timeframe [%s - %s] are already busy",
+                                  busySlots.stream().map(slot -> slot.getUser().getId()).toList(), start, end)
+            );
+        }
+    }
+
+    private static void validateUsersHaveMatchingSlots(Set<Long> allUserIds, Instant start, Instant end, List<TimeSlot> slots) {
+        Set<Long> usersWithSlots = slots.stream()
+                                        .map(slot -> slot.getUser().getId())
+                                        .collect(Collectors.toUnmodifiableSet());
+
+
+        List<Long> usersWithoutSlots = allUserIds.stream()
+                                                 .filter(userId -> !usersWithSlots.contains(userId))
+                                                 .toList();
+        if (!usersWithoutSlots.isEmpty()) {
+            log.warn("Meeting schedule failed: Users {} have no matching slot for [{} - {}]",
+                     usersWithoutSlots, start, end);
+            throw new IllegalStateException(
+                    String.format("Users %s are not available: no matching slot found for timeframe [%s - %s]",
+                                  usersWithoutSlots, start, end)
+            );
+        }
+    }
+
     private void validateAllUserExists(Collection<Long> userIds) {
         List<Long> missingIds = userRepository.findMissingIds(userIds);
         if (!missingIds.isEmpty()) {
@@ -122,11 +149,14 @@ public class MeetingApplicationService implements ScheduleMeetingUseCase, Cancel
         log.info("Attempting to cancel meeting id: {}", meetingId);
         Meeting meeting = meetingRepository.findById(meetingId)
                                            .orElseThrow(() -> {
-                                               log.warn("cancelMeeting failed: Meeting not found with id {}", meetingId);
+                                               log.warn("cancelMeeting failed: Meeting not found with id {}",
+                                                        meetingId);
                                                return new IllegalArgumentException("Meeting not found with id: " + meetingId);
                                            });
 
-        log.debug("Reverting {} consumed slots back to FREE status for meeting id: {}", meeting.getTimeSlots().size(), meetingId);
+        log.debug("Reverting {} consumed slots back to FREE status for meeting id: {}",
+                  meeting.getTimeSlots().size(),
+                  meetingId);
         for (TimeSlot slot : meeting.getTimeSlots()) {
             slot.markAsFree();
         }
@@ -154,7 +184,9 @@ public class MeetingApplicationService implements ScheduleMeetingUseCase, Cancel
             throw new IllegalArgumentException("Meeting start time and end time must not be null");
         }
         if (!command.startTime().isBefore(command.endTime())) {
-            log.warn("Command validation failed: start [{}] is not before end [{}]", command.startTime(), command.endTime());
+            log.warn("Command validation failed: start [{}] is not before end [{}]",
+                     command.startTime(),
+                     command.endTime());
             throw new IllegalArgumentException("Meeting start time must be strictly before end time");
         }
         if (command.participantIds() != null && command.participantIds().stream().anyMatch(Objects::isNull)) {

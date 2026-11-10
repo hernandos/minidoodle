@@ -98,8 +98,8 @@ class MeetingApplicationServiceTest {
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(organizer));
         when(userRepository.findMissingIds(anyCollection())).thenReturn(List.of());
-        when(timeSlotRepository.findByUserIdAndStartTimeAndEndTime(1L, start, end)).thenReturn(Optional.of(orgSlot));
-        when(timeSlotRepository.findByUserIdAndStartTimeAndEndTime(2L, start, end)).thenReturn(Optional.of(partSlot));
+        when(timeSlotRepository.findByUserIdsAndStartTimeAndEndTime(List.of(1L, 2L), start, end))
+                .thenReturn(List.of(orgSlot, partSlot));
         when(timeSlotRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
         when(meetingRepository.save(any(Meeting.class))).thenAnswer(inv -> inv.getArgument(0));
         when(meterRegistry.counter(anyString())).thenReturn(counter);
@@ -115,6 +115,8 @@ class MeetingApplicationServiceTest {
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<TimeSlot>> slotCaptor = ArgumentCaptor.forClass(List.class);
         verify(timeSlotRepository).saveAll(slotCaptor.capture());
+        verify(timeSlotRepository).findByUserIdsAndStartTimeAndEndTime(List.of(1L, 2L), start, end);
+        verify(timeSlotRepository, never()).findByUserIdAndStartTimeAndEndTime(anyLong(), any(), any());
         assertThat(slotCaptor.getValue()).containsExactly(orgSlot, partSlot);
         assertThat(slotCaptor.getValue()).allMatch(slot -> slot.getStatus() == SlotStatus.BUSY);
 
@@ -144,12 +146,12 @@ class MeetingApplicationServiceTest {
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(organizer));
         when(userRepository.findMissingIds(anyCollection())).thenReturn(List.of());
-        when(timeSlotRepository.findByUserIdAndStartTimeAndEndTime(1L, start, end)).thenReturn(Optional.of(orgSlot));
-        when(timeSlotRepository.findByUserIdAndStartTimeAndEndTime(2L, start, end)).thenReturn(Optional.empty());
+        when(timeSlotRepository.findByUserIdsAndStartTimeAndEndTime(List.of(1L, 2L), start, end))
+                .thenReturn(List.of(orgSlot));
 
         assertThatThrownBy(() -> meetingApplicationService.scheduleMeeting(command))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("User 2 is not available: no matching slot found");
+                .hasMessageContaining("Users [2] are not available: no matching slot found");
 
         verify(timeSlotRepository, never()).saveAll(anyList());
         verify(meetingRepository, never()).save(any());
@@ -184,13 +186,13 @@ class MeetingApplicationServiceTest {
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(organizer));
         when(userRepository.findMissingIds(anyCollection())).thenReturn(List.of());
-        when(timeSlotRepository.findByUserIdAndStartTimeAndEndTime(1L, start, end)).thenReturn(Optional.of(orgSlot));
-        when(timeSlotRepository.findByUserIdAndStartTimeAndEndTime(2L, start, end)).thenReturn(Optional.of(partSlot));
+        when(timeSlotRepository.findByUserIdsAndStartTimeAndEndTime(List.of(1L, 2L), start, end))
+                .thenReturn(List.of(orgSlot, partSlot));
 
         assertThatThrownBy(() -> meetingApplicationService.scheduleMeeting(command))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("slot for timeframe")
-                .hasMessageContaining("is already busy");
+                .hasMessageContaining("Users [2] are not available")
+                .hasMessageContaining("already busy");
 
         verify(timeSlotRepository, never()).saveAll(anyList());
         verify(meetingRepository, never()).save(any());

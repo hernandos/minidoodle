@@ -143,7 +143,7 @@ class ApplicationServicesIntegrationTest {
         );
         assertThatThrownBy(() -> scheduleMeetingUseCase.scheduleMeeting(conflictCommand))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("is already busy");
+                .hasMessageContaining("are already busy");
 
         // 7. Modifying a booked slot fails
         assertThatThrownBy(() -> updateTimeSlotUseCase.updateTimeSlot(orgSlot.getId(),

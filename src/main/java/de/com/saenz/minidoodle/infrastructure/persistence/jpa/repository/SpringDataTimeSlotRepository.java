@@ -43,4 +43,6 @@ public interface SpringDataTimeSlotRepository extends JpaRepository<TimeSlotEnti
                                                                                           SlotStatus status);
 
     Optional<TimeSlotEntity> findByUserIdAndStartTimeAndEndTime(Long userId, Instant start, Instant end);
+
+    List<TimeSlotEntity> findByUserIdInAndStartTimeAndEndTime(List<Long> userIds, Instant start, Instant end);
 }
