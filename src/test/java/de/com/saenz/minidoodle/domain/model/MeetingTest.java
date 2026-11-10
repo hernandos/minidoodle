@@ -80,8 +80,20 @@ class MeetingTest {
         Instant start = Instant.parse("2026-11-09T14:00:00Z");
         Instant end = start.plus(Duration.ofMinutes(30));
 
-        TimeSlot slot1 = TimeSlot.builder().id(1L).user(user).startTime(start).endTime(end).status(SlotStatus.BUSY).build();
-        TimeSlot slot2 = TimeSlot.builder().id(2L).user(user).startTime(start).endTime(end).status(SlotStatus.BUSY).build();
+        TimeSlot slot1 = TimeSlot.builder()
+                                 .id(1L)
+                                 .user(user)
+                                 .startTime(start)
+                                 .endTime(end)
+                                 .status(SlotStatus.BUSY)
+                                 .build();
+        TimeSlot slot2 = TimeSlot.builder()
+                                 .id(2L)
+                                 .user(user)
+                                 .startTime(start)
+                                 .endTime(end)
+                                 .status(SlotStatus.BUSY)
+                                 .build();
 
         Meeting meeting = Meeting.of("Sync", null, null);
         meeting.addConsumedSlot(slot1);
@@ -105,9 +117,24 @@ class MeetingTest {
         Instant start = Instant.parse("2026-11-09T14:00:00Z");
         Instant end = start.plus(Duration.ofMinutes(30));
 
-        TimeSlot slotOrg = TimeSlot.builder().user(organizer).startTime(start).endTime(end).status(SlotStatus.BUSY).build();
-        TimeSlot slotBob = TimeSlot.builder().user(participant1).startTime(start).endTime(end).status(SlotStatus.BUSY).build();
-        TimeSlot slotCharlie = TimeSlot.builder().user(participant2).startTime(start).endTime(end).status(SlotStatus.BUSY).build();
+        TimeSlot slotOrg = TimeSlot.builder()
+                                   .user(organizer)
+                                   .startTime(start)
+                                   .endTime(end)
+                                   .status(SlotStatus.BUSY)
+                                   .build();
+        TimeSlot slotBob = TimeSlot.builder()
+                                   .user(participant1)
+                                   .startTime(start)
+                                   .endTime(end)
+                                   .status(SlotStatus.BUSY)
+                                   .build();
+        TimeSlot slotCharlie = TimeSlot.builder()
+                                       .user(participant2)
+                                       .startTime(start)
+                                       .endTime(end)
+                                       .status(SlotStatus.BUSY)
+                                       .build();
 
         Meeting meeting = Meeting.of(null, null, organizer);
 

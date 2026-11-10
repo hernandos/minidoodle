@@ -110,7 +110,10 @@ public class MeetingApplicationService implements ScheduleMeetingUseCase, Cancel
         }
     }
 
-    private static void validateUsersHaveMatchingSlots(Set<Long> allUserIds, Instant start, Instant end, List<TimeSlot> slots) {
+    private static void validateUsersHaveMatchingSlots(Set<Long> allUserIds,
+                                                       Instant start,
+                                                       Instant end,
+                                                       List<TimeSlot> slots) {
         Set<Long> usersWithSlots = slots.stream()
                                         .map(slot -> slot.getUser().getId())
                                         .collect(Collectors.toUnmodifiableSet());

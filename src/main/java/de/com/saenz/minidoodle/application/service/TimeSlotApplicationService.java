@@ -47,7 +47,10 @@ public class TimeSlotApplicationService implements CreateTimeSlotUseCase, Update
         List<TimeSlot> overlapping = timeSlotRepository.findByUserIdAndTimeRange(userId, startTime, endTime);
         if (!overlapping.isEmpty()) {
             TimeSlot conflict = overlapping.getFirst();
-            log.warn("createTimeSlot failed: Overlap detected for user {} in timeframe [{} - {}]", userId, startTime, endTime);
+            log.warn("createTimeSlot failed: Overlap detected for user {} in timeframe [{} - {}]",
+                     userId,
+                     startTime,
+                     endTime);
             throw new IllegalArgumentException(String.format(
                     "Time slot [%s - %s] overlaps with existing slot [%s - %s] for user %d",
                     startTime, endTime, conflict.getStartTime(), conflict.getEndTime(), userId
@@ -74,7 +77,10 @@ public class TimeSlotApplicationService implements CreateTimeSlotUseCase, Update
             throw new IllegalArgumentException("Time slot ID must not be null");
         }
 
-        log.debug("Verifying slot {} status and checking overlap with new timeframe [{} - {}]", slotId, newStartTime, newEndTime);
+        log.debug("Verifying slot {} status and checking overlap with new timeframe [{} - {}]",
+                  slotId,
+                  newStartTime,
+                  newEndTime);
 
         TimeSlot slot = timeSlotRepository.findById(slotId)
                                           .orElseThrow(() -> {

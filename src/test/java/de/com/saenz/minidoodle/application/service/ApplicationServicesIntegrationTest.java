@@ -194,8 +194,12 @@ class ApplicationServicesIntegrationTest {
                 "Quick Sync", null, organizer.getId(), List.of(participant.getId()), start, end
         ));
 
-        assertThat(timeSlotRepository.findById(orgSlot.getId())).get().extracting(TimeSlot::getStatus).isEqualTo(SlotStatus.BUSY);
-        assertThat(timeSlotRepository.findById(partSlot.getId())).get().extracting(TimeSlot::getStatus).isEqualTo(SlotStatus.BUSY);
+        assertThat(timeSlotRepository.findById(orgSlot.getId())).get()
+                                                                .extracting(TimeSlot::getStatus)
+                                                                .isEqualTo(SlotStatus.BUSY);
+        assertThat(timeSlotRepository.findById(partSlot.getId())).get()
+                                                                 .extracting(TimeSlot::getStatus)
+                                                                 .isEqualTo(SlotStatus.BUSY);
 
         // Cancel meeting
         cancelMeetingUseCase.cancelMeeting(meeting.getId());
@@ -204,7 +208,11 @@ class ApplicationServicesIntegrationTest {
         assertThat(meetingRepository.findById(meeting.getId())).isEmpty();
 
         // Verify slots are freed back to FREE
-        assertThat(timeSlotRepository.findById(orgSlot.getId())).get().extracting(TimeSlot::getStatus).isEqualTo(SlotStatus.FREE);
-        assertThat(timeSlotRepository.findById(partSlot.getId())).get().extracting(TimeSlot::getStatus).isEqualTo(SlotStatus.FREE);
+        assertThat(timeSlotRepository.findById(orgSlot.getId())).get()
+                                                                .extracting(TimeSlot::getStatus)
+                                                                .isEqualTo(SlotStatus.FREE);
+        assertThat(timeSlotRepository.findById(partSlot.getId())).get()
+                                                                 .extracting(TimeSlot::getStatus)
+                                                                 .isEqualTo(SlotStatus.FREE);
     }
 }
