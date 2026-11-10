@@ -1,5 +1,6 @@
 package de.com.saenz.minidoodle.application.service;
 
+import de.com.saenz.minidoodle.domain.exception.ResourceNotFoundException;
 import de.com.saenz.minidoodle.domain.model.Meeting;
 import de.com.saenz.minidoodle.domain.model.TimeSlot;
 import de.com.saenz.minidoodle.domain.model.User;
@@ -36,6 +37,42 @@ public class MeetingApplicationService implements ScheduleMeetingUseCase, Cancel
     private final UserRepository userRepository;
     private final Optional<MeterRegistry> meterRegistry;
 
+    private static void validateSlotsAreFree(Instant start, Instant end, List<TimeSlot> slots) {
+        List<TimeSlot> busySlots = slots.stream()
+                                        .filter(slot -> !slot.isFree())
+                                        .toList();
+        if (!busySlots.isEmpty()) {
+            log.warn("Meeting schedule failed: Slots already busy for users {} in [{} - {}]",
+                     busySlots.stream().map(slot -> slot.getUser().getId()).toList(), start, end);
+            throw new IllegalStateException(
+                    String.format("Users %s are not available: slots for timeframe [%s - %s] are already busy",
+                                  busySlots.stream().map(slot -> slot.getUser().getId()).toList(), start, end)
+            );
+        }
+    }
+
+    private static void validateUsersHaveMatchingSlots(Set<Long> allUserIds,
+                                                       Instant start,
+                                                       Instant end,
+                                                       List<TimeSlot> slots) {
+        Set<Long> usersWithSlots = slots.stream()
+                                        .map(slot -> slot.getUser().getId())
+                                        .collect(Collectors.toUnmodifiableSet());
+
+
+        List<Long> usersWithoutSlots = allUserIds.stream()
+                                                 .filter(userId -> !usersWithSlots.contains(userId))
+                                                 .toList();
+        if (!usersWithoutSlots.isEmpty()) {
+            log.warn("Meeting schedule failed: Users {} have no matching slot for [{} - {}]",
+                     usersWithoutSlots, start, end);
+            throw new IllegalStateException(
+                    String.format("Users %s are not available: no matching slot found for timeframe [%s - %s]",
+                                  usersWithoutSlots, start, end)
+            );
+        }
+    }
+
     @Override
     public Meeting scheduleMeeting(ScheduleMeetingCommand command) {
         validateCommand(command);
@@ -47,7 +84,7 @@ public class MeetingApplicationService implements ScheduleMeetingUseCase, Cancel
                                        .orElseThrow(() -> {
                                            log.warn("Meeting schedule failed: Organizer not found with id {}",
                                                     command.organizerId());
-                                           return new IllegalArgumentException("Organizer not found with id: " + command.organizerId());
+                                           return new ResourceNotFoundException("Organizer not found with id: " + command.organizerId());
                                        });
 
         Set<Long> allUserIds = new LinkedHashSet<>();
@@ -96,44 +133,11 @@ public class MeetingApplicationService implements ScheduleMeetingUseCase, Cancel
         return slots;
     }
 
-    private static void validateSlotsAreFree(Instant start, Instant end, List<TimeSlot> slots) {
-        List<TimeSlot> busySlots = slots.stream()
-                                        .filter(slot -> !slot.isFree())
-                                        .toList();
-        if (!busySlots.isEmpty()) {
-            log.warn("Meeting schedule failed: Slots already busy for users {} in [{} - {}]",
-                     busySlots.stream().map(slot -> slot.getUser().getId()).toList(), start, end);
-            throw new IllegalStateException(
-                    String.format("Users %s are not available: slots for timeframe [%s - %s] are already busy",
-                                  busySlots.stream().map(slot -> slot.getUser().getId()).toList(), start, end)
-            );
-        }
-    }
-
-    private static void validateUsersHaveMatchingSlots(Set<Long> allUserIds, Instant start, Instant end, List<TimeSlot> slots) {
-        Set<Long> usersWithSlots = slots.stream()
-                                        .map(slot -> slot.getUser().getId())
-                                        .collect(Collectors.toUnmodifiableSet());
-
-
-        List<Long> usersWithoutSlots = allUserIds.stream()
-                                                 .filter(userId -> !usersWithSlots.contains(userId))
-                                                 .toList();
-        if (!usersWithoutSlots.isEmpty()) {
-            log.warn("Meeting schedule failed: Users {} have no matching slot for [{} - {}]",
-                     usersWithoutSlots, start, end);
-            throw new IllegalStateException(
-                    String.format("Users %s are not available: no matching slot found for timeframe [%s - %s]",
-                                  usersWithoutSlots, start, end)
-            );
-        }
-    }
-
     private void validateAllUserExists(Collection<Long> userIds) {
         List<Long> missingIds = userRepository.findMissingIds(userIds);
         if (!missingIds.isEmpty()) {
             log.warn("Meeting schedule failed: Users not found with ids {}", missingIds);
-            throw new IllegalArgumentException("Users not found with ids: " + missingIds);
+            throw new ResourceNotFoundException("Users not found with ids: " + missingIds);
         }
     }
 
@@ -149,7 +153,7 @@ public class MeetingApplicationService implements ScheduleMeetingUseCase, Cancel
                                            .orElseThrow(() -> {
                                                log.warn("cancelMeeting failed: Meeting not found with id {}",
                                                         meetingId);
-                                               return new IllegalArgumentException("Meeting not found with id: " + meetingId);
+                                               return new ResourceNotFoundException("Meeting not found with id: " + meetingId);
                                            });
 
         log.debug("Reverting {} consumed slots back to FREE status for meeting id: {}",

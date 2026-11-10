@@ -48,7 +48,8 @@ class GlobalExceptionHandlerTest {
     @Test
     @DisplayName("handleOptimisticLockingFailureException should return 409 Conflict with retry recommendation")
     void handleOptimisticLockingFailureException_shouldReturnConflict() {
-        OptimisticLockingFailureException ex = new OptimisticLockingFailureException("Row updated by another transaction");
+        OptimisticLockingFailureException ex = new OptimisticLockingFailureException(
+                "Row updated by another transaction");
 
         ProblemDetail problem = exceptionHandler.handleOptimisticLockingFailureException(ex);
 

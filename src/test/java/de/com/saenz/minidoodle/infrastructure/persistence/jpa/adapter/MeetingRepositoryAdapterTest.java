@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -100,7 +99,44 @@ class MeetingRepositoryAdapterTest {
         meeting.addConsumedSlot(attendeeSlot);
         Meeting saved = meetingRepository.save(meeting);
 
-        List<Meeting> results = meetingRepository.findByParticipantUserId(attendee.getId());
+        var results = meetingRepository.findByParticipantUserId(attendee.getId());
         assertThat(results).extracting(Meeting::getId).contains(saved.getId());
+    }
+
+    @Test
+    @DisplayName("should find meetings by organizer and participant user ids combined")
+    void findByOrganizerIdAndParticipantUserId_shouldReturnOnlyMatchingMeetings() {
+        User organizer = createUniqueUser("org_comb");
+        User participant = createUniqueUser("part_comb");
+        User otherParticipant = createUniqueUser("other_comb");
+
+        Instant start = Instant.parse("2026-11-09T18:00:00Z");
+        Instant end = start.plus(Duration.ofHours(1));
+
+        TimeSlot orgSlot = timeSlotRepository.save(TimeSlot.builder()
+                                                           .user(organizer)
+                                                           .startTime(start)
+                                                           .endTime(end)
+                                                           .status(SlotStatus.BUSY)
+                                                           .build());
+        TimeSlot partSlot = timeSlotRepository.save(TimeSlot.builder()
+                                                            .user(participant)
+                                                            .startTime(start)
+                                                            .endTime(end)
+                                                            .status(SlotStatus.BUSY)
+                                                            .build());
+
+        Meeting meeting = Meeting.of("Combined Filter Sync", null, organizer);
+        meeting.addConsumedSlot(orgSlot);
+        meeting.addConsumedSlot(partSlot);
+        Meeting saved = meetingRepository.save(meeting);
+
+        var matching = meetingRepository.findByOrganizerIdAndParticipantUserId(organizer.getId(),
+                                                                               participant.getId());
+        assertThat(matching).extracting(Meeting::getId).contains(saved.getId());
+
+        var nonMatching = meetingRepository.findByOrganizerIdAndParticipantUserId(organizer.getId(),
+                                                                                  otherParticipant.getId());
+        assertThat(nonMatching).extracting(Meeting::getId).doesNotContain(saved.getId());
     }
 }

@@ -15,13 +15,11 @@ public interface MeetingRepository {
 
     Optional<Meeting> findById(Long id);
 
-    List<Meeting> findAll();
-
     List<Meeting> findByOrganizerId(Long organizerId);
 
     List<Meeting> findByParticipantUserId(Long userId);
 
-    void deleteById(Long id);
+    List<Meeting> findByOrganizerIdAndParticipantUserId(Long organizerId, Long participantId);
 
-    boolean existsById(Long id);
+    void deleteById(Long id);
 }

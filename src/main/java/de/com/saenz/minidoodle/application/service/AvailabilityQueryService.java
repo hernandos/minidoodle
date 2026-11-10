@@ -46,7 +46,8 @@ public class AvailabilityQueryService implements GetAggregatedAvailabilityQuery,
         if (userIds == null || userIds.isEmpty()) {
             return List.of();
         }
-        log.debug("Querying aggregated availability for {} users in timeframe [{} - {}]", userIds.size(), startTime, endTime);
+        log.debug("Querying aggregated availability for {} users in timeframe [{} - {}]",
+                  userIds.size(), startTime, endTime);
         return recordTimer(() -> timeSlotRepository.findByUserIdsAndTimeRange(userIds, startTime, endTime));
     }
 
@@ -63,11 +64,12 @@ public class AvailabilityQueryService implements GetAggregatedAvailabilityQuery,
         if (userIds == null || userIds.isEmpty()) {
             return List.of();
         }
-        log.debug("Querying aggregated FREE slots for {} users in timeframe [{} - {}]", userIds.size(), startTime, endTime);
+        log.debug("Querying aggregated FREE slots for {} users in timeframe [{} - {}]",
+                  userIds.size(), startTime, endTime);
         return recordTimer(() -> timeSlotRepository.findByUserIdsAndTimeRangeAndStatus(userIds,
-                                                                                        startTime,
-                                                                                        endTime,
-                                                                                        SlotStatus.FREE));
+                                                                                       startTime,
+                                                                                       endTime,
+                                                                                       SlotStatus.FREE));
     }
 
     @Override
