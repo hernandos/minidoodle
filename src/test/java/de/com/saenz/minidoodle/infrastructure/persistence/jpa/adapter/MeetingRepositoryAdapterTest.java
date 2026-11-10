@@ -137,6 +137,6 @@ class MeetingRepositoryAdapterTest {
 
         var nonMatching = meetingRepository.findByOrganizerIdAndParticipantUserId(organizer.getId(),
                                                                                   otherParticipant.getId());
-        assertThat(nonMatching).extracting(Meeting::getId).doesNotContain(saved.getId());
+        assertThat(nonMatching).extracting(Meeting::getId).doesNotContain(saved.getId()).isEmpty();
     }
 }
