@@ -171,16 +171,34 @@ class MeetingControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/meetings without filters should return all meetings")
-    void getMeetings_withoutFilters_shouldReturnAllMeetings() throws Exception {
-        when(getMeetingQuery.getAllMeetings()).thenReturn(List.of());
-        when(apiDtoMapper.toMeetingResponseList(List.of())).thenReturn(List.of());
-
+    @DisplayName("GET /api/v1/meetings without filters should return 400 Bad Request")
+    void getMeetings_withoutFilters_shouldReturn400_whenBothFiltersMissing() throws Exception {
         mockMvc.perform(get("/api/v1/meetings"))
-               .andExpect(status().isOk())
-               .andExpect(jsonPath("$").isEmpty());
+               .andExpect(status().isBadRequest())
+               .andExpect(jsonPath("$.title").value("Invalid Argument"))
+               .andExpect(jsonPath("$.status").value(400))
+               .andExpect(jsonPath("$.detail").value("At least one filter parameter ('organizerId' or 'participantId') is required"));
 
-        verify(getMeetingQuery).getAllMeetings();
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/meetings?participantId=2 should return meetings where user is a participant")
+    void getMeetings_byParticipant_shouldReturnMeetings() throws Exception {
+        User org = User.builder().id(1L).username("org").build();
+        Meeting meeting = Meeting.of("Retrospective", null, org);
+        MeetingResponse responseDto = new MeetingResponse(
+                60L, "Retrospective", null, new UserResponse(1L, "org", null, null),
+                start, end, List.of(), List.of()
+        );
+
+        when(getMeetingQuery.getMeetingsByParticipant(2L)).thenReturn(List.of(meeting));
+        when(apiDtoMapper.toMeetingResponseList(List.of(meeting))).thenReturn(List.of(responseDto));
+
+        mockMvc.perform(get("/api/v1/meetings").param("participantId", "2"))
+               .andExpect(status().isOk())
+               .andExpect(jsonPath("$[0].id").value(60));
+
+        verify(getMeetingQuery).getMeetingsByParticipant(2L);
     }
 
     @Test

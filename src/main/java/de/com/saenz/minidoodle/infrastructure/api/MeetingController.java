@@ -81,10 +81,12 @@ public class MeetingController {
     }
 
     @Operation(summary = "List meetings",
-               description = "Retrieves meetings with optional filters. Filter by 'organizerId' to get meetings organized by a user, by 'participantId' to get meetings where a user participates, or combine both to get meetings organized by one user in which another participates. Omit both to list all meetings.")
+               description = "Retrieves meetings filtered by organizer or participant. At least one filter ('organizerId' or 'participantId') is required. When both are provided, returns meetings organized by organizerId where participantId is also a participant.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Meetings retrieved successfully",
-                         content = @Content(schema = @Schema(implementation = MeetingResponse.class)))
+                         content = @Content(schema = @Schema(implementation = MeetingResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Validation failed - missing filter parameter",
+                         content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     })
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
@@ -94,15 +96,17 @@ public class MeetingController {
             @Parameter(description = "Filter by participant user ID", example = "2")
             @RequestParam(required = false) Long participantId) {
 
+        if (organizerId == null && participantId == null) {
+            throw new IllegalArgumentException("At least one filter parameter ('organizerId' or 'participantId') is required");
+        }
+
         List<Meeting> meetings;
         if (organizerId != null && participantId != null) {
             meetings = getMeetingQuery.getMeetingsByOrganizerAndParticipant(organizerId, participantId);
         } else if (organizerId != null) {
             meetings = getMeetingQuery.getMeetingsByOrganizer(organizerId);
-        } else if (participantId != null) {
-            meetings = getMeetingQuery.getMeetingsByParticipant(participantId);
         } else {
-            meetings = getMeetingQuery.getAllMeetings();
+            meetings = getMeetingQuery.getMeetingsByParticipant(participantId);
         }
 
         return apiDtoMapper.toMeetingResponseList(meetings);

@@ -28,10 +28,7 @@ public class MeetingQueryService implements GetMeetingQuery {
         return meetingRepository.findById(id);
     }
 
-    @Override
-    public List<Meeting> getAllMeetings() {
-        return meetingRepository.findAll();
-    }
+
 
     @Override
     public List<Meeting> getMeetingsByOrganizer(Long organizerId) {

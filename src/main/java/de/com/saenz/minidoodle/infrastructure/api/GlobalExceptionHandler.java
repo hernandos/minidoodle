@@ -42,10 +42,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
         log.warn("Method argument validation failed (400 Bad Request): {}", errors);
 
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(BAD_REQUEST, errors);
-        problemDetail.setTitle("Validation Failed");
-        problemDetail.setProperty("timestamp", Instant.now());
-        return ResponseEntity.badRequest().body(problemDetail);
+        return ResponseEntity.badRequest()
+                             .body(createProblemDetail(BAD_REQUEST, "Validation Failed", errors));
     }
 
     @Override
@@ -55,7 +53,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                                                                           @NonNull WebRequest request) {
         log.warn("Missing required request parameter (400 Bad Request): {}", ex.getMessage());
         return ResponseEntity.badRequest()
-                             .body(problemDetail(BAD_REQUEST, "Missing Parameter", ex.getMessage()));
+                             .body(createProblemDetail(BAD_REQUEST, "Missing Parameter", ex.getMessage()));
     }
 
     @Override
@@ -67,8 +65,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         String paramName = ex instanceof org.springframework.web.method.annotation.MethodArgumentTypeMismatchException mismatch
                 ? mismatch.getName() : "unknown";
         return ResponseEntity.badRequest()
-                             .body(problemDetail(BAD_REQUEST, "Invalid Parameter",
-                                                 "Invalid value for parameter '" + paramName + "'"));
+                             .body(createProblemDetail(BAD_REQUEST, "Invalid Parameter",
+                                                       "Invalid value for parameter '" + paramName + "'"));
     }
 
     @Override
@@ -78,8 +76,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                                                                   @NonNull WebRequest request) {
         log.warn("Malformed request body (400 Bad Request): {}", ex.getMessage());
         return ResponseEntity.badRequest()
-                             .body(problemDetail(BAD_REQUEST, "Malformed Request",
-                                                 "Request body is missing or not valid JSON"));
+                             .body(createProblemDetail(BAD_REQUEST, "Malformed Request",
+                                                       "Request body is missing or not valid JSON"));
     }
 
     @Override
@@ -89,66 +87,48 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                                                                      @NonNull WebRequest request) {
         log.warn("Unsupported media type (415 Unsupported Media Type): {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
-                             .body(problemDetail(HttpStatus.UNSUPPORTED_MEDIA_TYPE,
-                                                 "Unsupported Media Type",
-                                                 ex.getMessage()));
+                             .body(createProblemDetail(HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+                                                       "Unsupported Media Type",
+                                                       ex.getMessage()));
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ProblemDetail handleResourceNotFoundException(ResourceNotFoundException ex) {
         log.warn("Resource not found (404 Not Found): {}", ex.getMessage());
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(NOT_FOUND, ex.getMessage());
-        problemDetail.setTitle("Resource Not Found");
-        problemDetail.setProperty("timestamp", Instant.now());
-        return problemDetail;
+        return createProblemDetail(NOT_FOUND, "Resource Not Found", ex.getMessage());
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ProblemDetail handleConstraintViolationException(ConstraintViolationException ex) {
         log.warn("Constraint violation error (400 Bad Request): {}", ex.getMessage());
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(BAD_REQUEST, ex.getMessage());
-        problemDetail.setTitle("Validation Failed");
-        problemDetail.setProperty("timestamp", Instant.now());
-        return problemDetail;
+        return createProblemDetail(BAD_REQUEST, "Validation Failed", ex.getMessage());
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ProblemDetail handleIllegalArgumentException(IllegalArgumentException ex) {
         log.warn("Client validation error (400 Bad Request): {}", ex.getMessage());
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(BAD_REQUEST, ex.getMessage());
-        problemDetail.setTitle("Invalid Argument");
-        problemDetail.setProperty("timestamp", Instant.now());
-        return problemDetail;
+        return createProblemDetail(BAD_REQUEST, "Invalid Argument", ex.getMessage());
     }
 
     @ExceptionHandler(IllegalStateException.class)
     public ProblemDetail handleIllegalStateException(IllegalStateException ex) {
         log.warn("Business state conflict (409 Conflict): {}", ex.getMessage());
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(CONFLICT, ex.getMessage());
-        problemDetail.setTitle("Business State Conflict");
-        problemDetail.setProperty("timestamp", Instant.now());
-        return problemDetail;
+        return createProblemDetail(CONFLICT, "Business State Conflict", ex.getMessage());
     }
 
     @ExceptionHandler(OptimisticLockingFailureException.class)
     public ProblemDetail handleOptimisticLockingFailureException(OptimisticLockingFailureException ex) {
         log.warn("Concurrent modification detected (409 Conflict): {}", ex.getMessage());
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(CONFLICT, CONCURRENT_MODIFICATION);
-        problemDetail.setTitle("Concurrent Modification Conflict");
-        problemDetail.setProperty("timestamp", Instant.now());
-        return problemDetail;
+        return createProblemDetail(CONFLICT, "Concurrent Modification Conflict", CONCURRENT_MODIFICATION);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ProblemDetail handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
         log.error("Data integrity violation encountered (409 Conflict): {}", ex.getMessage(), ex);
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(CONFLICT, REQUEST_CONFLICTS_WITH_EXISTING_DATA);
-        problemDetail.setTitle("Data Integrity Violation");
-        problemDetail.setProperty("timestamp", Instant.now());
-        return problemDetail;
+        return createProblemDetail(CONFLICT, "Data Integrity Violation", REQUEST_CONFLICTS_WITH_EXISTING_DATA);
     }
 
-    private ProblemDetail problemDetail(HttpStatusCode status, String title, String detail) {
+    private ProblemDetail createProblemDetail(HttpStatusCode status, String title, String detail) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(status, detail);
         problemDetail.setTitle(title);
         problemDetail.setProperty("timestamp", Instant.now());
@@ -158,9 +138,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleGeneralException(Exception ex) {
         log.error("Unhandled server exception occurred (500 Internal Server Error): {}", ex.getMessage(), ex);
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(INTERNAL_SERVER_ERROR, UNEXPECTED_ERROR);
-        problemDetail.setTitle("Internal Server Error");
-        problemDetail.setProperty("timestamp", Instant.now());
-        return problemDetail;
+        return createProblemDetail(INTERNAL_SERVER_ERROR, "Internal Server Error", UNEXPECTED_ERROR);
     }
 }
