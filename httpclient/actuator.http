@@ -1,0 +1,36 @@
+### =========================================================================
+### ACTUATOR & OBSERVABILITY (Health, Metrics, Prometheus)
+### =========================================================================
+
+### 4.1 Application Health Check (with DB & Probes)
+GET http://{{host}}/actuator/health
+Accept: application/json
+
+> {%
+    client.test("Health status is UP", function() {
+        client.assert(response.status === 200);
+        client.assert(response.body.status === "UP");
+    });
+%}
+
+### 4.2 Application Info
+GET http://{{host}}/actuator/info
+Accept: application/json
+
+### 4.3 List All Available Metrics
+GET http://{{host}}/actuator/metrics
+Accept: application/json
+
+### 4.4 HTTP Server Requests Metric (with percentiles & histogram)
+GET http://{{host}}/actuator/metrics/http.server.requests
+Accept: application/json
+
+### 4.5 Prometheus Metrics Scrape Endpoint
+GET http://{{host}}/actuator/prometheus
+Accept: text/plain
+
+> {%
+    client.test("Prometheus metrics endpoint is UP", function() {
+        client.assert(response.status === 200);
+    });
+%}

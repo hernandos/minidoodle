@@ -1,0 +1,104 @@
+### =========================================================================
+### TIME SLOTS (Proactive Availability Management)
+### =========================================================================
+
+### 1.1 Create TimeSlot for User 1 (Alice) - Success (201 Created)
+POST http://{{host}}/api/v1/time-slots
+Content-Type: application/json
+Accept: application/json
+
+{
+  "userId": 1,
+  "startTime": "2026-11-15T09:00:00Z",
+  "endTime": "2026-11-15T10:00:00Z"
+}
+
+> {%
+    client.test("Status code is 201 Created", function() {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+    client.test("Slot has FREE status", function() {
+        client.assert(response.body.status === "FREE", "Status must be FREE");
+    });
+    client.global.set("aliceSlotId", response.body.id);
+%}
+
+### 1.2 Create TimeSlot for User 2 (Bob) - Success (201 Created)
+POST http://{{host}}/api/v1/time-slots
+Content-Type: application/json
+Accept: application/json
+
+{
+  "userId": 2,
+  "startTime": "2026-11-15T09:00:00Z",
+  "endTime": "2026-11-15T10:00:00Z"
+}
+
+> {%
+    client.test("Status code is 201 Created", function() {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+    client.global.set("bobSlotId", response.body.id);
+%}
+
+### 1.3 Create TimeSlot - Error: Invalid timeframe start >= end (400 Bad Request)
+POST http://{{host}}/api/v1/time-slots
+Content-Type: application/json
+Accept: application/problem+json
+
+{
+  "userId": 1,
+  "startTime": "2026-11-15T10:00:00Z",
+  "endTime": "2026-11-15T09:00:00Z"
+}
+
+> {%
+    client.test("Status code is 400 Bad Request", function() {
+        client.assert(response.status === 400, "Expected 400 but got " + response.status);
+    });
+    client.test("ProblemDetail title is Validation Failed", function() {
+        client.assert(response.body.title === "Validation Failed");
+    });
+%}
+
+### 1.4 Create TimeSlot - Error: Missing required fields (400 Bad Request)
+POST http://{{host}}/api/v1/time-slots
+Content-Type: application/json
+Accept: application/problem+json
+
+{
+  "userId": null,
+  "startTime": null,
+  "endTime": null
+}
+
+> {%
+    client.test("Status code is 400 Bad Request", function() {
+        client.assert(response.status === 400, "Expected 400 but got " + response.status);
+    });
+%}
+
+### 1.5 Update TimeSlot - Success (200 OK)
+PUT http://{{host}}/api/v1/time-slots/{{aliceSlotId}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "startTime": "2026-11-15T09:30:00Z",
+  "endTime": "2026-11-15T10:30:00Z"
+}
+
+> {%
+    client.test("Status code is 200 OK", function() {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+%}
+
+### 1.6 Delete TimeSlot - Success (204 No Content)
+DELETE http://{{host}}/api/v1/time-slots/{{aliceSlotId}}
+
+> {%
+    client.test("Status code is 204 No Content", function() {
+        client.assert(response.status === 204, "Expected 204 but got " + response.status);
+    });
+%}
