@@ -11,7 +11,7 @@ import java.util.List;
  * Pure domain entity representing a scheduled meeting.
  * Created when converting available FREE slots of participants into booked BUSY events.
  * Meetings inherit the timeframe of the consumed slots and cannot have an independent duration.
- *
+ * <p>
  * Invariant: all consumed slots must match the exact same timeframe.
  * Enforced exclusively through {@link #addConsumedSlot(TimeSlot)}; the slot list is
  * exposed read-only and construction is only possible via the static factories.
@@ -35,7 +35,11 @@ public class Meeting {
         return new Meeting(null, title, description, organizer);
     }
 
-    public static Meeting reconstitute(Long id, String title, String description, User organizer, List<TimeSlot> slots) {
+    public static Meeting reconstitute(Long id,
+                                       String title,
+                                       String description,
+                                       User organizer,
+                                       List<TimeSlot> slots) {
         Meeting meeting = new Meeting(id, title, description, organizer);
         if (slots != null) {
             for (TimeSlot slot : slots) {
@@ -78,10 +82,24 @@ public class Meeting {
         if (slot == null) {
             throw new IllegalArgumentException("Consumed time slot cannot be null");
         }
+        if (slot.isFree()) {
+            throw new IllegalArgumentException("Cannot consume a FREE slot. Slot must be marked as BUSY");
+        }
         if (!timeSlots.isEmpty()) {
             TimeSlot first = timeSlots.getFirst();
             if (!first.matchesTimeframe(slot.getStartTime(), slot.getEndTime())) {
                 throw new IllegalArgumentException("All consumed slots in a meeting must match the exact same timeframe");
+            }
+        }
+        if (timeSlots.stream().anyMatch(existing ->
+                (slot.getId() != null && java.util.Objects.equals(existing.getId(), slot.getId())) || existing.equals(slot))) {
+            throw new IllegalArgumentException("Slot is already added to this meeting");
+        }
+        if (slot.getUser() != null && slot.getUser().getId() != null) {
+            boolean userAlreadyPresent = timeSlots.stream()
+                    .anyMatch(existing -> existing.getUser() != null && java.util.Objects.equals(existing.getUser().getId(), slot.getUser().getId()));
+            if (userAlreadyPresent) {
+                throw new IllegalArgumentException("A slot for user " + slot.getUser().getId() + " is already present in this meeting");
             }
         }
         timeSlots.add(slot);

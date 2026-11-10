@@ -47,7 +47,7 @@ public class Calendar {
         return Collections.unmodifiableSortedSet(timeSlots);
     }
 
-    void addTimeSlot(TimeSlot newSlot) {
+    public void addTimeSlot(TimeSlot newSlot) {
         if (newSlot == null) {
             throw new IllegalArgumentException("Time slot cannot be null");
         }

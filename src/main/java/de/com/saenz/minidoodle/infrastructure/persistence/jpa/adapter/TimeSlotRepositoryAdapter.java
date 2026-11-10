@@ -62,9 +62,65 @@ public class TimeSlotRepositoryAdapter implements TimeSlotRepository {
     }
 
     @Override
+    public List<TimeSlot> findByTimeRange(Instant startTime, Instant endTime) {
+        return timeSlotEntityMapper.toDomainList(
+                springDataTimeSlotRepository.findByStartTimeLessThanAndEndTimeGreaterThan(endTime, startTime)
+        );
+    }
+
+    @Override
+    public List<TimeSlot> findByTimeRangeAndStatus(Instant startTime, Instant endTime, SlotStatus status) {
+        return timeSlotEntityMapper.toDomainList(
+                springDataTimeSlotRepository.findByStartTimeLessThanAndEndTimeGreaterThanAndStatus(endTime,
+                                                                                                   startTime,
+                                                                                                   status)
+        );
+    }
+
+    @Override
+    public List<TimeSlot> findByUserIdsAndTimeRange(List<Long> userIds, Instant startTime, Instant endTime) {
+        if (userIds == null || userIds.isEmpty()) {
+            return List.of();
+        }
+        return timeSlotEntityMapper.toDomainList(
+                springDataTimeSlotRepository.findByUserIdInAndStartTimeLessThanAndEndTimeGreaterThan(userIds,
+                                                                                                     endTime,
+                                                                                                     startTime)
+        );
+    }
+
+    @Override
+    public List<TimeSlot> findByUserIdsAndTimeRangeAndStatus(List<Long> userIds,
+                                                             Instant startTime,
+                                                             Instant endTime,
+                                                             SlotStatus status) {
+        if (userIds == null || userIds.isEmpty()) {
+            return List.of();
+        }
+        return timeSlotEntityMapper.toDomainList(
+                springDataTimeSlotRepository.findByUserIdInAndStartTimeLessThanAndEndTimeGreaterThanAndStatus(userIds,
+                                                                                                              endTime,
+                                                                                                              startTime,
+                                                                                                              status)
+        );
+    }
+
+    @Override
     public Optional<TimeSlot> findByUserIdAndStartTimeAndEndTime(Long userId, Instant startTime, Instant endTime) {
         return springDataTimeSlotRepository.findByUserIdAndStartTimeAndEndTime(userId, startTime, endTime)
                                            .map(timeSlotEntityMapper::toDomain);
+    }
+
+    @Override
+    public List<TimeSlot> findByUserIdsAndStartTimeAndEndTime(List<Long> userIds,
+                                                              Instant startTime,
+                                                              Instant endTime) {
+        if (userIds == null || userIds.isEmpty()) {
+            return List.of();
+        }
+        return timeSlotEntityMapper.toDomainList(
+                springDataTimeSlotRepository.findByUserIdInAndStartTimeAndEndTime(userIds, startTime, endTime)
+        );
     }
 
 
