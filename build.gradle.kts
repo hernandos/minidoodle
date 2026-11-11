@@ -1,7 +1,7 @@
 plugins {
     java
     id("org.springframework.boot") version "3.5.16"
-    id("io.spring.dependency-management") version "1.1.7"
+    id("io.gatling.gradle") version "3.16.0"
 }
 
 group = "de.com.saenz.minidoodle"
@@ -30,6 +30,10 @@ val commonsLang3Version = "3.21.0"
 val springDocVersion = "2.8.17"
 
 dependencies {
+    implementation(platform(org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES))
+    annotationProcessor(platform(org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES))
+    testImplementation(platform(org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES))
+
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-validation")
