@@ -145,6 +145,13 @@ The platform relies on proactive availability: users must explicitly create avai
   existing `TimeSlot`s from `FREE` to `BUSY`.
 * While time slots can have configurable durations and be modified, meetings themselves do not have an independent
   modifiable duration; they inherit the timeframe of the slots they consume.
+* **Why TimeSlot IDs are not used in the Schedule Meeting API**: The meeting creation request (`ScheduleMeetingRequest`)
+  does **not** accept physical TimeSlot identifiers (`timeSlotId`). Instead, it accepts the desired `startTime`,
+  `endTime`, `organizerId`, and `participantIds`. The domain service dynamically resolves, verifies, and locks the
+  matching `FREE` time slots for all involved parties ($N$ distinct time slots for $N$ participants). Requiring the
+  client to know and supply individual TimeSlot IDs for each participant would leak internal storage identifiers into the
+  scheduling abstraction and introduce client-side coordination overhead. It would also create race conditions if
+  individual slots are modified or re-created before the booking request is dispatched.
 
 ### 4. Concurrency Control (Preventing Double-Booking)
 
